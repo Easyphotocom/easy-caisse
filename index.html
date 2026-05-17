@@ -1100,8 +1100,16 @@ function updateCumul(dep) {
 function updateRevSummary(dep) {
   const entries=getEntries(dep.id);
   const revs=getRevs(dep.id);
-  const duEsp=entries.reduce((s,e)=>s+(e.reverserEsp||0),0);
-  const duCB=entries.reduce((s,e)=>s+(e.reverserCBht||0),0);
+  // Pour les anciennes saisies sans reverserEsp/reverserCBht, recalculer
+  const duEsp=entries.reduce((s,e)=>{
+    if(e.reverserEsp!==undefined) return s+(e.reverserEsp||0);
+    // Ancien calcul : tout en espèces
+    return s+(e.reverser||0);
+  },0);
+  const duCB=entries.reduce((s,e)=>{
+    if(e.reverserCBht!==undefined) return s+(e.reverserCBht||0);
+    return s; // anciennes saisies : pas de CB séparé
+  },0);
   const du=duEsp+duCB;
   const dejaEsp=revs.filter(r=>r.mode==='esp').reduce((s,r)=>s+r.montant,0);
   const dejaCB=revs.filter(r=>r.mode==='cb').reduce((s,r)=>s+r.montant,0);
