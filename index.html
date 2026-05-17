@@ -1043,11 +1043,15 @@ function saveEntry() {
   const nbJetons = Math.max(0, parseInt(document.getElementById('nb-jetons')?.value)||0);
   const jetonVal = nbJetons * 2;
   const tropVerse = Math.max(0, parseFloat(document.getElementById('trop-verse')?.value)||0);
-  const totalCBnow = parseFloat(document.getElementById('d-cb')?.value)||0;
-  const fraisCBval = Math.round((totalCBnow * (dep.fraisCB||0) / 100) * 100) / 100;
-  const baseRev = Math.max(0, total - jetonVal - tropVerse - fraisCBval);
-  const reverser = baseRev * (dep.pct/100);
-  const newEntry = {id:uid(), depId:currentDepId, date:dateHeure, periode, qtys, totalCB, totalEsp, total, nbJetons, jetonVal, tropVerse, reverser, ts:Date.now()};
+  const fraisCB = Math.round((totalCB * (dep.fraisCB||0) / 100) * 100) / 100;
+  // Reversement espèces : (espèces - jetons - tips) × %
+  const baseEsp = Math.max(0, totalEsp - jetonVal - tropVerse);
+  const reverserEsp = Math.round(baseEsp * (dep.pct/100) * 100) / 100;
+  // Reversement CB : (CB × % - frais CB) ÷ 1.20 pour avoir HT
+  const reverserCBttc = Math.max(0, totalCB * (dep.pct/100) - fraisCB);
+  const reverserCBht = Math.round((reverserCBttc / 1.20) * 100) / 100;
+  const reverser = reverserEsp + reverserCBht;
+  const newEntry = {id:uid(), depId:currentDepId, date:dateHeure, periode, qtys, totalCB, totalEsp, total, nbJetons, jetonVal, tropVerse, fraisCB, reverserEsp, reverserCBht, reverser, ts:Date.now()};
   allEntries.unshift(newEntry);
   saveEntries(newEntry);
   dep.products.forEach((_,i)=>{
