@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Easy Caisse</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f4f0; color: #1a1a18; min-height: 100vh; padding: 1.5rem 1rem; overflow-x: hidden; }
+    .app { max-width: 820px; margin: 0 auto; width: 100%; overflow-x: hidden; }
+
+    .header { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+    .header-brand { font-size: 20px; font-weight: 600; color: #1a1a18; }
+    .header-sub { font-size: 13px; color: #6b6b67; margin-top: 3px; }
+
+    .module { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1.25rem; overflow: hidden; }
+    .section-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b6b67; text-transform: uppercase; margin-bottom: 1rem; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .entry-count { font-size: 12px; color: #9b9b97; }
+
+    /* Dépositaires */
+    .dep-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+    .dep-item { background: #f4f4f0; border: 1px solid #e0dfd8; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .dep-item.active { border-color: #1a1a18; background: #f9f9f7; }
+    .dep-info { flex: 1; }
+    .dep-name { font-size: 14px; font-weight: 600; color: #1a1a18; }
+    .dep-meta { font-size: 12px; color: #6b6b67; margin-top: 2px; }
+    .dep-actions { display: flex; gap: 6px; }
+    .btn-sm { height: 30px; padding: 0 10px; border: 1px solid #d4d3cb; border-radius: 6px; background: #fff; color: #1a1a18; font-size: 12px; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+    .btn-sm:hover { background: #f4f4f0; }
+    .btn-sm.danger:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+    .btn-sm.primary { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+    .btn-sm.primary:hover { background: #333; }
+
+    .dep-form { background: #f9f9f7; border: 1px solid #e0dfd8; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+    .dep-form-title { font-size: 13px; font-weight: 600; margin-bottom: 0.75rem; color: #1a1a18; }
+    .dep-form-grid { display: grid; grid-template-columns: 1fr 1fr 80px; gap: 8px; margin-bottom: 10px; }
+    .dep-form input { height: 36px; border: 1px solid #d4d3cb; border-radius: 8px; background: #fff; color: #1a1a18; font-size: 13px; padding: 0 10px; width: 100%; }
+    .dep-form input:focus { outline: none; border-color: #555; }
+    .dep-form-label { font-size: 11px; color: #6b6b67; margin-bottom: 3px; }
+    .dep-products { margin-top: 10px; }
+    .dep-products-title { font-size: 12px; font-weight: 600; color: #6b6b67; margin-bottom: 6px; }
+    .dep-product-row { display: grid; grid-template-columns: 1fr 90px auto; gap: 6px; margin-bottom: 6px; align-items: center; }
+    .dep-product-row input { height: 32px; font-size: 12px; }
+    .btn-add-product { background: none; border: 1px dashed #d4d3cb; border-radius: 6px; color: #6b6b67; font-size: 12px; padding: 5px 10px; cursor: pointer; margin-top: 4px; width: 100%; }
+    .btn-add-product:hover { background: #f4f4f0; }
+    .btn-rm { background: none; border: none; cursor: pointer; color: #bbb; font-size: 16px; padding: 0 4px; }
+    .btn-rm:hover { color: #dc2626; }
+    .dep-form-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+    /* Sélecteur dépositaire */
+    .dep-selector { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+    .dep-selector-row { display: flex; align-items: center; gap: 12px; }
+    .dep-selector select { flex: 1; height: 40px; border: 1px solid #d4d3cb; border-radius: 8px; background: #f4f4f0; color: #1a1a18; font-size: 14px; font-weight: 600; padding: 0 10px; cursor: pointer; }
+    .dep-selector select:focus { outline: none; border-color: #555; }
+    .dep-badge { font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 8px; background: #d1fae5; color: #065f46; white-space: nowrap; }
+
+    /* Saisie */
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-label { font-size: 12px; color: #6b6b67; }
+    .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-bottom: 12px; }
+    .date-row { display: flex; gap: 4px; align-items: center; }
+    .date-sep { font-size: 13px; color: #9b9b97; }
+    .sel-day, .sel-mon { width: 58px; }
+    .sel-yr { width: 76px; }
+    .date-row select, select { height: 38px; border: 1px solid #d4d3cb; border-radius: 8px; background: #f9f9f7; color: #1a1a18; font-size: 13px; padding: 0 6px; cursor: pointer; }
+    .date-row select:focus, select:focus { outline: none; border-color: #555; }
+    select { width: 100%; }
+
+    .products-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+    .product-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; padding: 1rem; min-width: 0; overflow: hidden; }
+    .product-name { font-size: 14px; font-weight: 600; color: #1a1a18; }
+    .product-sub { font-size: 12px; color: #6b6b67; margin-bottom: 12px; }
+    .badge-mode { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 6px; background: #dbeafe; color: #1e40af; font-weight: 600; margin-left: 6px; }
+    .qty-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .qty-label { font-size: 12px; color: #6b6b67; width: 90px; flex-shrink: 0; }
+    .qty-controls { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+    .qty-btn { width: 28px; height: 28px; border: 1px solid #d4d3cb; border-radius: 6px; background: #f4f4f0; color: #1a1a18; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
+    .qty-btn:hover { background: #e8e8e4; }
+    .qty-input { flex: 1; text-align: center; font-size: 14px; font-weight: 600; border: 1px solid #d4d3cb; border-radius: 8px; padding: 4px 4px; height: 38px; background: #f9f9f7; color: #1a1a18; min-width: 0; width: 0; }
+    .qty-input::placeholder { color: #bbb; font-weight: 400; }
+    .subtotal { font-size: 12px; color: #6b6b67; padding-top: 8px; border-top: 1px solid #e8e8e4; margin-top: 4px; }
+    .subtotal span { font-weight: 600; color: #1a1a18; }
+
+    .totals-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; width: 100%; }
+    .total-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 8px; padding: 8px 10px; flex: 1 1 0; min-width: 0; }
+    .total-label { font-size: 10px; color: #6b6b67; margin-bottom: 3px; }
+    .total-value { font-size: 15px; font-weight: 600; color: #1a1a18; }
+    .total-value.green { color: #065f46; }
+
+    .jeton-row { display: flex; align-items: center; gap: 10px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 10px 14px; margin-top: 12px; flex-wrap: wrap; }
+    .jeton-label { font-size: 13px; font-weight: 600; color: #92400e; flex-shrink: 0; }
+    .jeton-info { font-size: 11px; color: #b45309; flex: 1; }
+    .jeton-controls { display: flex; align-items: center; gap: 6px; }
+    .jeton-btn { width: 28px; height: 28px; border: 1px solid #fcd34d; border-radius: 6px; background: #fef3c7; color: #92400e; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .jeton-btn:hover { background: #fde68a; }
+    .jeton-input { width: 60px; text-align: center; font-size: 15px; font-weight: 600; border: 1px solid #fcd34d; border-radius: 6px; padding: 4px; height: 32px; background: #fffbeb; color: #92400e; }
+    .jeton-montant { font-size: 13px; font-weight: 600; color: #065f46; white-space: nowrap; }
+    .tropverse-row { display: flex; align-items: center; gap: 10px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 10px; padding: 10px 14px; margin-top: 8px; flex-wrap: wrap; }
+    .tropverse-label { font-size: 13px; font-weight: 600; color: #dc2626; flex-shrink: 0; }
+    .tropverse-info { font-size: 11px; color: #ef4444; flex: 1; }
+    .tropverse-input { width: 90px; text-align: center; font-size: 15px; font-weight: 600; border: 1px solid #fca5a5; border-radius: 6px; padding: 4px 8px; height: 36px; background: #fff; color: #dc2626; }
+    .tropverse-montant { font-size: 13px; font-weight: 600; color: #065f46; white-space: nowrap; }
+    .dispatch-row { background: #f4f4f0; border: 1px solid #e0dfd8; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+    .dispatch-title { font-size: 12px; font-weight: 600; color: #6b6b67; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .dispatch-grid { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+    .dispatch-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+    .dispatch-field label { font-size: 12px; color: #6b6b67; }
+    .dispatch-input { height: 38px; border: 1px solid #d4d3cb; border-radius: 8px; background: #fff; color: #1a1a18; font-size: 15px; font-weight: 600; padding: 0 10px; width: 100%; }
+    .dispatch-input:focus { outline: none; border-color: #555; }
+    .dispatch-check { font-size: 12px; margin-top: 6px; font-weight: 600; }
+    .dispatch-check.ok { color: #065f46; }
+    .dispatch-check.ko { color: #dc2626; }
+    .mode-toggle { display: flex; gap: 0; margin-bottom: 8px; border-radius: 6px; overflow: hidden; border: 1px solid #d4d3cb; width: fit-content; }
+    .mode-toggle button { padding: 4px 10px; font-size: 11px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; background: #f4f4f0; color: #6b6b67; }
+    .mode-toggle button.active { background: #1a1a18; color: #fff; }
+    .btn-save { width: 100%; padding: 13px; background: #1a1a18; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; color: #fff; cursor: pointer; margin-top: 12px; transition: background 0.15s; }
+    .btn-save:hover { background: #333; }
+
+    .cumul-grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 8px; }
+    .cumul-card { background: #f4f4f0; border-radius: 8px; padding: 10px 12px; }
+    .cumul-label { font-size: 11px; color: #6b6b67; margin-bottom: 4px; }
+    .cumul-value { font-size: 18px; font-weight: 600; color: #1a1a18; }
+    .cumul-value.green { color: #065f46; }
+
+    .table-wrap { border: 1px solid #e0dfd8; border-radius: 10px; overflow-x: auto; }
+    .hist-table { border-collapse: collapse; font-size: 12px; width: 100%; }
+    .hist-table thead tr { background: #f4f4f0; }
+    .hist-table th { padding: 9px 10px; font-size: 11px; font-weight: 600; color: #6b6b67; text-align: center; border-bottom: 1px solid #e0dfd8; white-space: nowrap; }
+    .hist-table th:first-child { text-align: left; }
+    .hist-table td { padding: 9px 10px; text-align: center; border-bottom: 1px solid #e8e8e4; color: #1a1a18; white-space: nowrap; }
+    .hist-table td:first-child { text-align: left; font-weight: 600; }
+    .hist-table tbody tr:last-child td { border-bottom: none; }
+    .hist-table tbody tr:hover td { background: #f9f9f7; }
+    .td-total { font-weight: 600; }
+    .td-rev { font-weight: 600; color: #065f46; }
+    .btn-del { background: none; border: none; cursor: pointer; color: #bbb; font-size: 14px; padding: 2px 7px; border-radius: 5px; }
+    .btn-del:hover { color: #dc2626; background: #fee2e2; }
+    .empty-state { text-align: center; padding: 1.5rem; font-size: 13px; color: #9b9b97; }
+
+    .rev-summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1rem; }
+    .rev-stat { background: #f4f4f0; border-radius: 8px; padding: 10px 12px; }
+    .rev-stat-label { font-size: 11px; color: #6b6b67; margin-bottom: 3px; }
+    .rev-stat-value { font-size: 16px; font-weight: 600; color: #1a1a18; }
+    .rev-stat-value.green { color: #065f46; }
+    .rev-form { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 1rem; flex-wrap: wrap; }
+    .rev-field { display: flex; flex-direction: column; gap: 5px; }
+    .rev-field label { font-size: 12px; color: #6b6b67; }
+    .rev-field input { height: 38px; border: 1px solid #d4d3cb; border-radius: 8px; background: #f9f9f7; color: #1a1a18; font-size: 14px; padding: 0 10px; }
+    .btn-rev { height: 38px; padding: 0 16px; background: #d1fae5; border: none; border-radius: 8px; color: #065f46; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-rev:hover { background: #a7f3d0; }
+    .rev-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .rev-table th { padding: 8px 10px; font-size: 11px; font-weight: 600; color: #6b6b67; text-align: center; border-bottom: 1px solid #e0dfd8; background: #f4f4f0; white-space: nowrap; }
+    .rev-table th:first-child { text-align: left; }
+    .rev-table td { padding: 9px 10px; text-align: center; border-bottom: 1px solid #e8e8e4; color: #1a1a18; white-space: nowrap; }
+    .rev-table td:first-child { text-align: left; font-weight: 600; }
+    .rev-table tbody tr:last-child td { border-bottom: none; }
+    .rev-table tbody tr:hover td { background: #f9f9f7; }
+
+    .no-dep { text-align: center; padding: 2rem; font-size: 14px; color: #9b9b97; background: #f9f9f7; border-radius: 10px; border: 1px dashed #d4d3cb; }
+
+    /* Récap impression */
+    .recap-module { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1.25rem; }
+    .recap-filters { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem; }
+    .recap-field { display: flex; flex-direction: column; gap: 4px; }
+    .recap-field label { font-size: 12px; color: #6b6b67; }
+    .btn-print { height: 38px; padding: 0 20px; background: #1a1a18; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-print:hover { background: #333; }
+    .btn-all { height: 38px; padding: 0 14px; background: #f4f4f0; border: 1px solid #d4d3cb; border-radius: 8px; color: #1a1a18; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .btn-all:hover { background: #e8e8e4; }
+
+    /* Print styles - handled via popup window */
+      .print-page { padding: 20px; max-width: 100%; }
+      .print-header { border-bottom: 2px solid #1a1a18; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
+      .print-title { font-size: 20px; font-weight: 700; color: #1a1a18; }
+      .print-sub { font-size: 12px; color: #6b6b67; margin-top: 4px; }
+      .print-period { font-size: 12px; color: #6b6b67; text-align: right; }
+      .print-section { margin-bottom: 20px; }
+      .print-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6b6b67; border-bottom: 1px solid #e0dfd8; padding-bottom: 4px; margin-bottom: 10px; }
+      .print-summary { display: flex; gap: 16px; margin-bottom: 16px; }
+      .print-stat { flex: 1; border: 1px solid #e0dfd8; border-radius: 6px; padding: 8px 12px; }
+      .print-stat-label { font-size: 10px; color: #6b6b67; margin-bottom: 3px; }
+      .print-stat-value { font-size: 16px; font-weight: 700; color: #1a1a18; }
+      .print-stat-value.green { color: #065f46; }
+      .print-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 16px; }
+      .print-table th { background: #f4f4f0; padding: 7px 8px; text-align: center; border: 1px solid #e0dfd8; font-weight: 600; font-size: 10px; color: #6b6b67; }
+      .print-table th:first-child { text-align: left; }
+      .print-table td { padding: 6px 8px; text-align: center; border: 1px solid #e8e8e4; }
+      .print-table td:first-child { text-align: left; font-weight: 600; }
+      .print-table .td-total { font-weight: 700; }
+      .print-table .td-rev { font-weight: 700; color: #065f46; }
+      .print-footer { border-top: 1px solid #e0dfd8; padding-top: 10px; font-size: 10px; color: #9b9b97; display: flex; justify-content: space-between; }
+    }
+    
+
+    /* Export/Import */
+    .backup-module { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1.25rem; }
+    .backup-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-export { height: 38px; padding: 0 16px; background: #1e40af; border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-export:hover { background: #1d4ed8; }
+    .btn-import { height: 38px; padding: 0 16px; background: #f4f4f0; border: 1px solid #d4d3cb; border-radius: 8px; color: #1a1a18; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-import:hover { background: #e8e8e4; }
+    .backup-info { font-size: 12px; color: #6b6b67; }
+    .backup-ok { font-size: 12px; color: #065f46; font-weight: 600; display:none; }
+
+    /* Stock module */
+    .stock-module { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1rem; }
+    .stock-module-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #0369a1; text-transform: uppercase; margin-bottom: 0.75rem; }
+    .stock-product { background: #fff; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+    .stock-product-name { font-size: 13px; font-weight: 600; color: #1a1a18; margin-bottom: 8px; }
+    .stock-stats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .stock-stat { background: #f0f9ff; border-radius: 6px; padding: 5px 10px; font-size: 11px; color: #0369a1; }
+    .stock-stat span { font-weight: 700; display: block; font-size: 14px; color: #1a1a18; }
+    .stock-stat.alert { background: #fef2f2; color: #dc2626; }
+    .stock-stat.alert span { color: #dc2626; }
+    .stock-appro { background: #f9f9f7; border: 1px dashed #d4d3cb; border-radius: 8px; padding: 8px 10px; margin-top: 6px; }
+    .stock-appro-title { font-size: 11px; color: #6b6b67; margin-bottom: 6px; font-weight: 600; }
+    .stock-appro-form { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; }
+    .stock-appro-field { display: flex; flex-direction: column; gap: 3px; }
+    .stock-appro-field label { font-size: 10px; color: #6b6b67; }
+    .stock-appro-field input, .stock-appro-field select { height: 32px; border: 1px solid #d4d3cb; border-radius: 6px; background: #fff; font-size: 12px; padding: 0 8px; }
+    .btn-appro { height: 32px; padding: 0 12px; background: #0369a1; border: none; border-radius: 6px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-appro:hover { background: #0284c7; }
+    .stock-history { margin-top: 6px; font-size: 11px; color: #6b6b67; }
+    .stock-history-row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #f0f0ee; }
+
+    /* Dashboard CA */
+    .dashboard { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1.25rem; }
+    .dashboard-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b6b67; text-transform: uppercase; margin-bottom: 1rem; }
+    .dashboard-product { background: #f9f9f7; border: 1px solid #e0dfd8; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+    .dashboard-product-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #1a1a18; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; }
+    .dashboard-stat { background: #fff; border: 1px solid #e0dfd8; border-radius: 6px; padding: 7px 10px; }
+    .dashboard-stat-label { font-size: 10px; color: #6b6b67; margin-bottom: 2px; }
+    .dashboard-stat-value { font-size: 14px; font-weight: 600; color: #1a1a18; }
+    .dashboard-stat-value.green { color: #065f46; }
+    .dashboard-stat-value.blue { color: #1e40af; }
+    .dashboard-stat-value.orange { color: #b45309; }
+    .dashboard-stat-value.red { color: #dc2626; }
+    .dashboard-total { background: #1a1a18; border-radius: 10px; padding: 10px 14px; margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .dashboard-total-stat { flex: 1; min-width: 100px; }
+    .dashboard-total-label { font-size: 10px; color: #9b9b97; margin-bottom: 2px; }
+    .dashboard-total-value { font-size: 16px; font-weight: 600; color: #fff; }
+    .dashboard-total-value.green { color: #34d399; }
+
+    @media (max-width: 768px) {
+      body { padding: 0.75rem 0.5rem; }
+      .app { max-width: 100%; }
+
+      /* Header */
+      .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+      /* Grilles */
+      .form-grid, .products-grid { grid-template-columns: 1fr; }
+      .totals-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .cumul-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .dep-form-grid { grid-template-columns: 1fr; }
+      .rev-summary { grid-template-columns: 1fr; }
+      .dashboard-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .dashboard-total { flex-direction: column; gap: 8px; }
+
+      /* Modules */
+      .module { padding: 0.75rem; }
+      .cumul-module { padding: 0.75rem; }
+
+      /* Dépositaires */
+      .dep-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .dep-actions { width: 100%; display: flex; gap: 6px; }
+      .dep-actions .btn-sm { flex: 1; text-align: center; }
+      .dep-selector-row { flex-direction: column; gap: 8px; }
+      .dep-selector select { width: 100%; }
+
+      /* Saisie */
+      .qty-label { width: 70px; font-size: 11px; }
+      .jeton-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .tropverse-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .dispatch-grid { flex-direction: column; }
+
+      /* Tableaux - scroll horizontal */
+      .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .hist-table { min-width: 600px; }
+      .rev-table { min-width: 300px; }
+
+      /* Stock */
+      .stock-stats { flex-wrap: wrap; }
+      .stock-appro-form { flex-direction: column; }
+      .stock-stats-mobile { grid-template-columns: repeat(3,1fr); }
+
+      /* Recap */
+      .recap-filters { flex-direction: column; }
+
+      /* Backup */
+      .backup-row { flex-direction: column; }
+      .btn-export, .btn-import { width: 100%; }
+
+      /* Textes */
+      .total-value, .cumul-value { font-size: 15px; }
+      .total-label, .cumul-label { font-size: 10px; }
+    }
+
+    @media (max-width: 400px) {
+      .totals-grid { grid-template-columns: 1fr 1fr; }
+      .cumul-grid { grid-template-columns: 1fr 1fr; }
+      .total-value, .cumul-value { font-size: 13px; }
+      .header-brand { font-size: 16px; }
+    }
+  </style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDfeONpVS1_RXLSVT-ai-ptMY3fSPwa7wc",
+      authDomain: "easy-caisse-38bad.firebaseapp.com",
+      projectId: "easy-caisse-38bad",
+      storageBucket: "easy-caisse-38bad.firebasestorage.app",
+      messagingSenderId: "349805750948",
+      appId: "1:349805750948:web:fe47e9f678564acfacd431"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ── Firebase helpers ──────────────────────────────────────────
+    async function fbSave(colName, id, data) {
+      await setDoc(doc(db, colName, id), data);
+    }
+    async function fbDelete(colName, id) {
+      await deleteDoc(doc(db, colName, id));
+    }
+    async function fbLoadAll(colName) {
+      const snap = await getDocs(collection(db, colName));
+      return snap.docs.map(d => ({...d.data(), _fbId: d.id}));
+    }
+
+    // ── Sync to window so main script can use ─────────────────────
+    window.fbReady = true;
+    window.fbSave = fbSave;
+    window.fbDelete = fbDelete;
+    window.fbLoadAll = fbLoadAll;
+
+    // ── Real-time listeners ───────────────────────────────────────
+    onSnapshot(collection(db, 'deps'), snap => {
+      window._deps = snap.docs.map(d => ({...d.data(), id: d.id}));
+      if(window.onFbUpdate) window.onFbUpdate('deps');
+    });
+    onSnapshot(collection(db, 'entries'), snap => {
+      window._entries = snap.docs.map(d => ({...d.data(), id: d.id}))
+        .sort((a,b) => b.ts - a.ts);
+      if(window.onFbUpdate) window.onFbUpdate('entries');
+    });
+    onSnapshot(collection(db, 'revs'), snap => {
+      window._revs = snap.docs.map(d => ({...d.data(), id: d.id}))
+        .sort((a,b) => b.ts - a.ts);
+      if(window.onFbUpdate) window.onFbUpdate('revs');
+    });
+    onSnapshot(collection(db, 'stocks'), snap => {
+      window._stocks = snap.docs.map(d => ({...d.data(), id: d.id}));
+      if(window.onFbUpdate) window.onFbUpdate('stocks');
+    });
+  </script>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div><div class="header-brand">Easy Caisse</div><div class="header-sub">Gestion des encaissements</div></div>
+  </div>
+
+  <!-- Gestion des dépositaires -->
+  <div class="module">
+    <div class="section-header">
+      <p class="section-title" style="margin-bottom:0;">Gestion des dépositaires</p>
+      <button class="btn-sm primary" onclick="showDepForm()">+ Ajouter</button>
+    </div>
+    <div id="dep-form-container" style="display:none;"></div>
+    <div class="dep-list" id="dep-list">
+      <div class="no-dep">Aucun dépositaire. Cliquez sur "+ Ajouter" pour commencer.</div>
+    </div>
+  </div>
+
+  <!-- Sélecteur dépositaire -->
+  <div class="dep-selector">
+    <p class="section-title" style="margin-bottom:0.5rem;">Dépositaire actif</p>
+    <div class="dep-selector-row">
+      <select id="dep-select" onchange="selectDep(this.value)">
+        <option value="">— Choisir un dépositaire —</option>
+      </select>
+      <div class="dep-badge" id="dep-badge" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Zone saisie (masquée si pas de dépositaire sélectionné) -->
+  <div id="saisie-zone" style="display:none;">
+
+    <div class="module" style="margin-top:0; border-radius:12px;">
+      <p class="section-title">Nouvelle saisie</p>
+      <div style="margin-bottom:1rem;">
+        <div class="field-group">
+          <label class="field-label">Date <span style="font-size:11px;color:#9b9b97;">(JJ / MM / AAAA)</span></label>
+          <div class="date-row">
+            <select class="sel-day" id="date-dd"></select>
+            <span class="date-sep">/</span>
+            <select class="sel-mon" id="date-mm"></select>
+            <span class="date-sep">/</span>
+            <select class="sel-yr" id="date-yyyy"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="products-grid" id="products-grid"></div>
+
+      <div class="jeton-row">
+        <span class="jeton-label">🎟 Jetons utilisés</span>
+        <span class="jeton-info">Déduits du reversement (2 € / jeton)</span>
+        <div class="jeton-controls">
+          <button class="jeton-btn" onclick="adjJeton(-1)">−</button>
+          <input class="jeton-input" type="number" id="nb-jetons" value="0" min="0" oninput="update()"/>
+          <button class="jeton-btn" onclick="adjJeton(1)">+</button>
+        </div>
+        <span class="jeton-montant" id="jeton-montant">= 0,00 € déduits</span>
+      </div>
+
+      <div class="tropverse-row">
+        <span class="tropverse-label">⚠ Tips</span>
+        <span class="tropverse-info">Pourboire / monnaie non rendue</span>
+        <input class="tropverse-input" type="number" id="trop-verse" placeholder="0,00" min="0" step="0.01" oninput="update()"/>
+        <span class="tropverse-montant" id="trop-verse-montant">= 0,00 € déduits</span>
+      </div>
+
+      <div class="totals-grid" id="totals-grid">
+        <div class="total-card"><div class="total-label">Total encaissé</div><div class="total-value" id="t-total">0,00 €</div></div>
+        <div class="total-card"><div class="total-label" id="t-rev-label">À reverser</div><div class="total-value green" id="t-reverser">0,00 €</div></div>
+      </div>
+
+      <div class="dispatch-row">
+        <div class="dispatch-title">Répartition du total encaissé</div>
+        <div class="dispatch-grid">
+          <div class="dispatch-field">
+            <label>Dont CB (€)</label>
+            <input class="dispatch-input" type="number" id="d-cb" placeholder="0,00" min="0" step="0.01" oninput="updateDispatch()"/>
+          </div>
+          <div class="dispatch-field">
+            <label>Dont espèces (€)</label>
+            <input class="dispatch-input" type="number" id="d-esp" placeholder="0,00" min="0" step="0.01" oninput="updateDispatch()"/>
+          </div>
+          <div style="flex:1;min-width:120px;padding-bottom:4px;">
+            <div id="dispatch-check" class="dispatch-check"></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-save" onclick="saveEntry()">+ Enregistrer la saisie</button>
+    </div>
+
+    <!-- Cumul -->
+    <div class="module">
+      <div class="section-header" style="margin-bottom:0.75rem;"><p class="section-title" style="margin-bottom:0;">Cumul global</p></div>
+      <div class="cumul-grid">
+        <div class="cumul-card"><div class="cumul-label">Total encaissé</div><div class="cumul-value" id="c-total">0,00 €</div></div>
+        <div class="cumul-card"><div class="cumul-label">CB</div><div class="cumul-value" id="c-cb">0,00 €</div></div>
+        <div class="cumul-card"><div class="cumul-label">Espèces</div><div class="cumul-value" id="c-esp">0,00 €</div></div>
+        <div class="cumul-card"><div class="cumul-label">Jetons</div><div class="cumul-value" style="color:#b45309;" id="c-jetons">0,00 €</div></div>
+        <div class="cumul-card"><div class="cumul-label">Tips</div><div class="cumul-value" style="color:#dc2626;" id="c-tips">0,00 €</div></div>
+        <div class="cumul-card"><div class="cumul-label">Total à reverser</div><div class="cumul-value green" id="c-rev">0,00 €</div></div>
+      </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="module" style="padding-bottom:0;">
+      <div class="section-header"><p class="section-title" style="margin-bottom:0;">Historique des saisies</p><span class="entry-count" id="history-count"></span></div>
+      <div class="table-wrap">
+        <table class="hist-table" id="hist-table">
+          <thead><tr id="hist-head"></tr></thead>
+          <tbody id="history-body"><tr><td colspan="10" class="empty-state">Aucune saisie.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Reversements -->
+    <div class="module" style="padding-bottom:0;">
+      <div class="section-header" style="margin-bottom:0.75rem;"><p class="section-title" style="margin-bottom:0;">Reversements au dépositaire</p><span class="entry-count" id="rev-count"></span></div>
+      <div class="rev-summary">
+        <div class="rev-stat"><div class="rev-stat-label">Total dû (TTC)</div><div class="rev-stat-value green" id="rev-total-du">0,00 €</div></div>
+        <div class="rev-stat"><div class="rev-stat-label">Déjà reversé</div><div class="rev-stat-value" id="rev-deja">0,00 €</div></div>
+        <div class="rev-stat"><div class="rev-stat-label">Reste à reverser</div><div class="rev-stat-value green" id="rev-reste">0,00 €</div></div>
+      </div>
+      <div class="rev-form">
+        <div class="rev-field">
+          <label>Date <span style="font-size:11px;color:#9b9b97;">(JJ / MM / AAAA)</span></label>
+          <div class="date-row">
+            <select class="sel-day" id="rev-dd"></select>
+            <span class="date-sep">/</span>
+            <select class="sel-mon" id="rev-mm"></select>
+            <span class="date-sep">/</span>
+            <select class="sel-yr" id="rev-yyyy"></select>
+          </div>
+        </div>
+        <div class="rev-field">
+          <label>Montant (€)</label>
+          <input type="number" id="rev-montant" placeholder="0,00" min="0" step="0.01" style="width:110px;"/>
+        </div>
+        <button class="btn-rev" onclick="saveRev()">+ Enregistrer</button>
+      </div>
+      <div id="rev-error" style="display:none;color:#dc2626;font-size:12px;font-weight:600;margin-top:6px;padding:6px 10px;background:#fee2e2;border-radius:6px;"></div>
+      <div class="table-wrap">
+        <table class="rev-table">
+          <thead><tr><th>Date</th><th>Montant reversé</th><th></th></tr></thead>
+          <tbody id="rev-body"><tr><td colspan="3" class="empty-state">Aucun reversement.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Stock -->
+    <div class="module" id="stock-zone">
+      <div class="section-header" style="margin-bottom:0.5rem;">
+        <p class="section-title" style="margin-bottom:0;">Gestion du stock</p>
+      </div>
+      <div id="stock-content"></div>
+    </div>
+
+    <!-- Dashboard CA -->
+    <div class="module" id="dashboard-zone">
+      <div class="section-header" style="margin-bottom:0.5rem;">
+        <p class="section-title" style="margin-bottom:0;">Tableau de bord — CA & Marge</p>
+      </div>
+      <div id="dashboard-content"></div>
+    </div>
+
+    <!-- Récap impression -->
+    <div class="recap-module no-print">
+      <div class="section-header" style="margin-bottom:0.75rem;">
+        <p class="section-title" style="margin-bottom:0;">Récapitulatif imprimable</p>
+      </div>
+      <div class="recap-filters">
+        <div class="recap-field">
+          <label>Du <span style="font-size:11px;color:#9b9b97;">(JJ/MM/AAAA)</span></label>
+          <div class="date-row">
+            <select class="sel-day" id="rp-dd1"></select>
+            <span class="date-sep">/</span>
+            <select class="sel-mon" id="rp-mm1"></select>
+            <span class="date-sep">/</span>
+            <select class="sel-yr" id="rp-yyyy1"></select>
+          </div>
+        </div>
+        <div class="recap-field">
+          <label>Au <span style="font-size:11px;color:#9b9b97;">(JJ/MM/AAAA)</span></label>
+          <div class="date-row">
+            <select class="sel-day" id="rp-dd2"></select>
+            <span class="date-sep">/</span>
+            <select class="sel-mon" id="rp-mm2"></select>
+            <span class="date-sep">/</span>
+            <select class="sel-yr" id="rp-yyyy2"></select>
+          </div>
+        </div>
+        <div class="recap-field" style="justify-content:flex-end;">
+          <label>&nbsp;</label>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-all" onclick="printRecap(true)">Toutes les données</button>
+            <button class="btn-print" onclick="printRecap(false)">Imprimer la période</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end saisie-zone -->
+
+  <!-- Sauvegarde -->
+  <div class="backup-module no-print">
+    <div class="section-header" style="margin-bottom:0.75rem;">
+      <p class="section-title" style="margin-bottom:0;">Sauvegarde des données</p>
+    </div>
+    <div class="backup-row">
+      <button class="btn-export" onclick="exportData()">⬇ Export JSON</button>
+      <button class="btn-export" onclick="exportCSV()" style="background:#065f46;">⬇ Export CSV</button>
+      <button class="btn-import" onclick="document.getElementById('import-file').click()">⬆ Import</button>
+      <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(this)"/>
+      <span class="backup-info">Exportez régulièrement un fichier de sauvegarde sur votre ordinateur ou Google Drive.</span>
+      <span class="backup-ok" id="backup-ok">✓ Importation réussie !</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Data (synced from Firebase via window._*) ────────────────────
+let deps = [];
+let allEntries = [];
+let allRevs = [];
+let allStocks = [];
+
+// Called by Firebase listeners when data changes
+window.onFbUpdate = function(type) {
+  if(type === 'deps') {
+    deps = window._deps || [];
+    renderDepList();
+    renderDepSelect();
+    if(currentDepId) selectDep(currentDepId);
+  }
+  if(type === 'entries') {
+    allEntries = window._entries || [];
+    const dep = getDep(currentDepId);
+    if(dep) { renderHistory(dep); updateCumul(dep); updateRevSummary(dep); }
+  }
+  if(type === 'revs') {
+    allRevs = window._revs || [];
+    const dep = getDep(currentDepId);
+    if(dep) { renderRevs(dep); updateRevSummary(dep); renderDashboard(dep); }
+  }
+  if(type === 'stocks') {
+    allStocks = window._stocks || [];
+    const dep = getDep(currentDepId);
+    if(dep) { renderStock(dep); renderDashboard(dep); }
+  }
+};
+let currentDepId = null;
+let editingDepId = null;
+
+// ── Date selects ──────────────────────────────────────────────────
+function buildSelects(dId, mId, yId) {
+  const now = new Date();
+  const dS = document.getElementById(dId), mS = document.getElementById(mId), yS = document.getElementById(yId);
+  if (!dS || !mS || !yS) return;
+  dS.innerHTML = ''; mS.innerHTML = ''; yS.innerHTML = '';
+  for (let d=1;d<=31;d++){const o=document.createElement('option');const v=String(d).padStart(2,'0');o.value=v;o.textContent=v;dS.appendChild(o);}
+  for (let m=1;m<=12;m++){const o=document.createElement('option');const v=String(m).padStart(2,'0');o.value=v;o.textContent=v;mS.appendChild(o);}
+  const yr=now.getFullYear();
+  for (let y=yr-3;y<=yr+2;y++){const o=document.createElement('option');o.value=y;o.textContent=y;yS.appendChild(o);}
+  dS.value=String(now.getDate()).padStart(2,'0');
+  mS.value=String(now.getMonth()+1).padStart(2,'0');
+  yS.value=yr;
+}
+function getDate(d,m,y){
+  const dEl=document.getElementById(d),mEl=document.getElementById(m),yEl=document.getElementById(y);
+  if(!dEl||!mEl||!yEl)return '';
+  return `${dEl.value}/${mEl.value}/${yEl.value}`;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+function fmt(v){return Number(v).toFixed(2).replace('.',',')+' €';}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function saveDeps(dep) {
+  if(window.fbSave) window.fbSave('deps', dep.id, dep);
+}
+function saveEntries(entry) {
+  if(window.fbSave) window.fbSave('entries', entry.id, {...entry, ts: entry.ts||Date.now()});
+}
+function saveRevs(rev) {
+  if(window.fbSave) window.fbSave('revs', rev.id, {...rev, ts: rev.ts||Date.now()});
+}
+function deleteFbEntry(id) {
+  if(window.fbDelete) window.fbDelete('entries', id);
+}
+function deleteFbRev(id) {
+  if(window.fbDelete) window.fbDelete('revs', id);
+}
+function deleteFbDep(id) {
+  if(window.fbDelete) window.fbDelete('deps', id);
+}
+function getDep(id){return deps.find(d=>d.id===id);}
+function getStocks(depId, prodName){return allStocks.filter(s=>s.depId===depId && s.prodName===prodName);}
+function getStockTotal(depId, prodName){return getStocks(depId,prodName).reduce((s,a)=>s+a.qty,0);}
+function getStockSold(depId, prodName, prix){
+  return allEntries.filter(e=>e.depId===depId).reduce((s,e)=>{
+    const pi = deps.find(d=>d.id===depId)?.products.findIndex(p=>p.name===prodName);
+    if(pi===-1||pi===undefined) return s;
+    const q = e.qtys[pi];
+    if(!q) return s;
+    if(q.modeCA) return s + (q.ca||0)/prix;
+    return s + (q.qty||0);
+  },0);
+}
+function getEntries(depId){return allEntries.filter(e=>e.depId===depId);}
+// Shared stock - all stocks for a dep regardless of product
+function getSharedStocks(depId){return allStocks.filter(s=>s.depId===depId && s.prodName==='_shared_');}
+function getSharedStockTotal(depId){return getSharedStocks(depId).reduce((s,a)=>s+a.qty,0);}
+// Total sold across ALL products (each sale = 1 feuille)
+function getTotalSoldFeuilles(depId){
+  const dep = getDep(depId); if(!dep) return 0;
+  return allEntries.filter(e=>e.depId===depId).reduce((s,e)=>{
+    // Ventes produits print
+    const prodSold = dep.products.reduce((ps, p, pi) => {
+      if(!p.isPrint) return ps;
+      const q = e.qtys[pi];
+      if(!q) return ps;
+      if(q.modeCA) return ps + Math.round((q.ca||0)/p.prix);
+      return ps + (q.qty||0);
+    }, 0);
+    // Jetons = aussi des impressions (1 jeton = 1 feuille)
+    const jetonsSold = e.nbJetons || 0;
+    return s + prodSold + jetonsSold;
+  }, 0);
+}
+function getRevs(depId){return allRevs.filter(r=>r.depId===depId);}
+
+// ── Dépositaire form ──────────────────────────────────────────────
+function showDepForm(depId) {
+  editingDepId = depId || null;
+  const dep = depId ? getDep(depId) : null;
+  const products = dep ? dep.products : [{name:'Print Format 1', prix:2},{name:'Print Format 2', prix:2}];
+  const container = document.getElementById('dep-form-container');
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div class="dep-form">
+      <div class="dep-form-title">${dep ? 'Modifier le dépositaire' : 'Nouveau dépositaire'}</div>
+      <div class="dep-form-grid">
+        <div><div class="dep-form-label">Nom</div><input id="df-name" value="${dep?dep.name:''}" placeholder="Ex: Easy Cabine"/></div>
+        <div><div class="dep-form-label">Lieu</div><input id="df-lieu" value="${dep?dep.lieu:''}" placeholder="Ex: Cap Fun"/></div>
+        <div><div class="dep-form-label">% reversement</div><input id="df-pct" type="number" value="${dep?dep.pct:35}" min="0" max="100" placeholder="35"/></div>
+      </div>
+      <div class="dep-products">
+        <div class="dep-products-title">Produits</div>
+        <div style="display:grid;grid-template-columns:1fr 80px 60px auto;gap:5px;margin-bottom:4px;">
+          <span style="font-size:10px;color:#6b6b67;font-weight:600;">Nom</span>
+          <span style="font-size:10px;color:#6b6b67;font-weight:600;">Prix €</span>
+          <span style="font-size:10px;color:#6b6b67;font-weight:600;text-align:center;">Print ?</span>
+          <span></span>
+        </div>
+        <div id="df-products">
+          ${products.map((p,i)=>`
+            <div class="dep-product-row" id="dp-row-${i}" style="grid-template-columns:1fr 80px 60px auto;">
+              <input placeholder="Nom du produit" value="${p.name}" id="dp-name-${i}"/>
+              <input type="number" placeholder="Prix €" value="${p.prix}" id="dp-prix-${i}" min="0" step="0.01"/>
+              <div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-print-${i}" ${p.isPrint?'checked':''} style="width:18px;height:18px;cursor:pointer;"/></div>
+              <button class="btn-rm" onclick="removeProductRow(${i})">×</button>
+            </div>`).join('')}
+        </div>
+        <button class="btn-add-product" onclick="addProductRow()">+ Ajouter un produit</button>
+      </div>
+      <div class="dep-form-actions">
+        <button class="btn-sm primary" onclick="saveDep()">Enregistrer</button>
+        <button class="btn-sm" onclick="cancelDepForm()">Annuler</button>
+      </div>
+    </div>`;
+}
+
+let productRowCount = 2;
+function addProductRow() {
+  const i = productRowCount++;
+  const container = document.getElementById('df-products');
+  const row = document.createElement('div');
+  row.className = 'dep-product-row';
+  row.id = `dp-row-${i}`;
+  row.style.gridTemplateColumns = '1fr 80px 60px auto';
+  row.innerHTML = `<input placeholder="Nom du produit" id="dp-name-${i}"/><input type="number" placeholder="Prix €" id="dp-prix-${i}" min="0" step="0.01"/><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-print-${i}" style="width:18px;height:18px;cursor:pointer;"/></div><button class="btn-rm" onclick="removeProductRow(${i})">×</button>`;
+  container.appendChild(row);
+}
+function removeProductRow(i) {
+  const row = document.getElementById(`dp-row-${i}`);
+  if (row) row.remove();
+}
+
+function saveDep() {
+  const name = document.getElementById('df-name').value.trim();
+  const lieu = document.getElementById('df-lieu').value.trim();
+  const pct = parseFloat(document.getElementById('df-pct').value) || 0;
+  if (!name) return;
+  const products = [];
+  document.querySelectorAll('[id^="dp-name-"]').forEach(el => {
+    const idx = el.id.split('-').pop();
+    const prixEl = document.getElementById(`dp-prix-${idx}`);
+    const printEl = document.getElementById(`dp-print-${idx}`);
+    if (el.value.trim()) products.push({
+      name: el.value.trim(),
+      prix: parseFloat(prixEl?.value)||0,
+      isPrint: printEl ? printEl.checked : false
+    });
+  });
+  if (!products.length) return;
+  if (editingDepId) {
+    const dep = getDep(editingDepId);
+    dep.name = name; dep.lieu = lieu; dep.pct = pct; dep.products = products;
+    saveDeps(dep);
+  } else {
+    const newDep = {id: uid(), name, lieu, pct, products};
+    deps.push(newDep);
+    saveDeps(newDep);
+  }
+  cancelDepForm();
+  renderDepList();
+  renderDepSelect();
+  if (currentDepId) selectDep(currentDepId);
+}
+
+function cancelDepForm() {
+  document.getElementById('dep-form-container').style.display = 'none';
+  editingDepId = null;
+  productRowCount = 2;
+}
+
+function deleteDep(id) {
+  
+  deleteFbDep(id);
+  getEntries(id).forEach(e => deleteFbEntry(e.id));
+  getRevs(id).forEach(r => deleteFbRev(r.id));
+  deps = deps.filter(d=>d.id!==id);
+  allEntries = allEntries.filter(e=>e.depId!==id);
+  allRevs = allRevs.filter(r=>r.depId!==id);
+  if (currentDepId === id) { currentDepId = null; document.getElementById('saisie-zone').style.display='none'; }
+  renderDepList(); renderDepSelect();
+}
+
+function renderDepList() {
+  const container = document.getElementById('dep-list');
+  if (!deps.length) {
+    container.innerHTML = '<div class="no-dep">Aucun dépositaire. Cliquez sur "+ Ajouter" pour commencer.</div>';
+    return;
+  }
+  container.innerHTML = deps.map(d => `
+    <div class="dep-item ${d.id===currentDepId?'active':''}">
+      <div class="dep-info">
+        <div class="dep-name">${d.name}${d.lieu?' — '+d.lieu:''}</div>
+        <div class="dep-meta">${d.pct}% de reversement · ${d.products.length} produit${d.products.length>1?'s':''} : ${d.products.map(p=>p.name+' ('+fmt(p.prix)+')').join(', ')}</div>
+      </div>
+      <div class="dep-actions">
+        <button class="btn-sm" data-did="${d.id}" onclick="showDepForm(this.getAttribute('data-did'))">Modifier</button>
+        <button class="btn-sm danger" data-did="${d.id}" onclick="deleteDep(this.getAttribute('data-did'))">Supprimer</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderDepSelect() {
+  const sel = document.getElementById('dep-select');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Choisir un dépositaire —</option>';
+  deps.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d.id; o.textContent = `${d.name}${d.lieu?' — '+d.lieu:''}`;
+    sel.appendChild(o);
+  });
+  if (prev && deps.find(d=>d.id===prev)) sel.value = prev;
+}
+
+// ── Select active dep ─────────────────────────────────────────────
+function selectDep(id) {
+  currentDepId = id || null;
+  const dep = id ? getDep(id) : null;
+  const badge = document.getElementById('dep-badge');
+  const zone = document.getElementById('saisie-zone');
+  if (!dep) { badge.style.display='none'; zone.style.display='none'; renderDepList(); return; }
+  badge.style.display='block';
+  badge.textContent = `Dépositaire ${dep.pct} %`;
+  zone.style.display='block';
+  document.getElementById('t-rev-label').textContent = `À reverser (${dep.pct} %)`;
+  renderProducts(dep);
+  buildSelects('date-dd','date-mm','date-yyyy');
+  buildSelects('rev-dd','rev-mm','rev-yyyy');
+  renderHistory(dep);
+  updateCumul(dep);
+  updateRevSummary(dep);
+  renderRevs(dep);
+  renderDepList();
+  initRecapSelects();
+  renderStock(dep);
+  renderDashboard(dep);
+}
+
+// ── Products ──────────────────────────────────────────────────────
+function renderProducts(dep) {
+  const grid = document.getElementById('products-grid');
+  grid.innerHTML = dep.products.map((p,i) => `
+    <div class="product-card">
+      <div class="product-name">${p.name}</div>
+      <div class="product-sub">${fmt(p.prix)}</div>
+      <div class="mode-toggle">
+        <button id="p${i}-mode-qty" class="active" onclick="setMode(${i},'qty')">Quantité</button>
+        <button id="p${i}-mode-ca" onclick="setMode(${i},'ca')">CA (€)</button>
+      </div>
+      <div class="qty-row" id="p${i}-row-qty">
+        <span class="qty-label">Quantité</span>
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="adj('p${i}-qty',-1)">−</button>
+          <input class="qty-input" type="number" id="p${i}-qty" placeholder="—" min="0" oninput="update()"/>
+          <button class="qty-btn" onclick="adj('p${i}-qty',1)">+</button>
+        </div>
+      </div>
+      <div class="qty-row" id="p${i}-row-ca" style="display:none;">
+        <span class="qty-label">CA (€)</span>
+        <div class="qty-controls">
+          <input class="qty-input" type="number" id="p${i}-ca" placeholder="—" min="0" step="0.01" style="width:100%;" oninput="update()"/>
+        </div>
+      </div>
+      <div class="subtotal">Sous-total : <span id="sub${i}">0,00 €</span></div>
+    </div>`).join('');
+}
+
+function setMode(i, mode) {
+  document.getElementById('p'+i+'-mode-qty').className = mode==='qty' ? 'active' : '';
+  document.getElementById('p'+i+'-mode-ca').className  = mode==='ca'  ? 'active' : '';
+  document.getElementById('p'+i+'-row-qty').style.display = mode==='qty' ? 'flex' : 'none';
+  document.getElementById('p'+i+'-row-ca').style.display  = mode==='ca'  ? 'flex' : 'none';
+  // Clear the other field
+  if(mode==='qty') { const el=document.getElementById('p'+i+'-ca'); if(el) el.value=''; }
+  else             { const el=document.getElementById('p'+i+'-qty'); if(el) el.value=''; }
+  update();
+}
+
+
+
+function val(id){const el=document.getElementById(id);if(!el)return 0;const v=el.value;return v===''?0:Math.max(0,parseInt(v)||0);}
+function adj(id,delta){const el=document.getElementById(id);if(!el)return;el.value=Math.max(0,(el.value===''?0:parseInt(el.value)||0)+delta);update();}
+
+function adjJeton(delta) {
+  const el = document.getElementById('nb-jetons');
+  el.value = Math.max(0, (parseInt(el.value)||0) + delta);
+  update();
+}
+
+function getProductSub(p, i) {
+  const modeCA = document.getElementById('p'+i+'-mode-ca')?.classList.contains('active');
+  if(modeCA) {
+    return parseFloat(document.getElementById('p'+i+'-ca')?.value)||0;
+  } else {
+    return (parseInt(document.getElementById('p'+i+'-qty')?.value)||0) * p.prix;
+  }
+}
+
+function update() {
+  const dep = getDep(currentDepId); if(!dep)return;
+  let total=0;
+  dep.products.forEach((p,i) => {
+    const sub = getProductSub(p, i);
+    const subEl=document.getElementById(`sub${i}`); if(subEl) subEl.textContent=fmt(sub);
+    total+=sub;
+  });
+  const nbJetons = Math.max(0, parseInt(document.getElementById('nb-jetons')?.value)||0);
+  const jetonVal = nbJetons * 2;
+  const tropVerse = Math.max(0, parseFloat(document.getElementById('trop-verse')?.value)||0);
+  const baseRev = Math.max(0, total - jetonVal - tropVerse);
+  const reverser = baseRev * (dep.pct/100);
+  const jetonEl = document.getElementById('jeton-montant');
+  if(jetonEl) jetonEl.textContent = '= ' + fmt(jetonVal) + ' déduits';
+  const tvEl = document.getElementById('trop-verse-montant');
+  if(tvEl) tvEl.textContent = '= ' + fmt(tropVerse) + ' déduits';
+  document.getElementById('t-total').textContent=fmt(total);
+  document.getElementById('t-reverser').textContent=fmt(reverser);
+  updateDispatch();
+}
+
+function updateDispatch() {
+  const total = parseFloat(document.getElementById('t-total')?.textContent?.replace(',','.').replace(' €','')) || 0;
+  const cb = parseFloat(document.getElementById('d-cb')?.value) || 0;
+  const esp = parseFloat(document.getElementById('d-esp')?.value) || 0;
+  const diff = Math.round((cb + esp - total) * 100) / 100;
+  const el = document.getElementById('dispatch-check');
+  if(!el) return;
+  if(cb===0 && esp===0) { el.textContent=''; return; }
+  if(diff===0) { el.className='dispatch-check ok'; el.textContent='✓ CB + Espèces = Total'; }
+  else if(diff>0) { el.className='dispatch-check ko'; el.textContent='⚠ Excès de '+fmt(diff); }
+  else { el.className='dispatch-check ko'; el.textContent='⚠ Manque '+fmt(Math.abs(diff)); }
+}
+
+// ── Save entry ────────────────────────────────────────────────────
+function saveEntry() {
+  const dep = getDep(currentDepId); if(!dep)return;
+  let total=0;
+  const qtys = [];
+  let hasQty = false;
+  dep.products.forEach((p,i) => {
+    const modeCA = document.getElementById('p'+i+'-mode-ca')?.classList.contains('active');
+    const qty = modeCA ? null : (parseInt(document.getElementById('p'+i+'-qty')?.value)||0);
+    const ca  = modeCA ? (parseFloat(document.getElementById('p'+i+'-ca')?.value)||0) : null;
+    const sub = modeCA ? ca : qty*p.prix;
+    qtys.push({qty, ca, modeCA});
+    total+=sub;
+    if(sub>0) hasQty=true;
+  });
+  const nbJetonsCheck = Math.max(0, parseInt(document.getElementById('nb-jetons')?.value)||0);
+  const tropVerseCheck = Math.max(0, parseFloat(document.getElementById('trop-verse')?.value)||0);
+  if(!hasQty && nbJetonsCheck===0 && tropVerseCheck===0) return;
+  const totalCB = parseFloat(document.getElementById('d-cb')?.value)||0;
+  const totalEsp = parseFloat(document.getElementById('d-esp')?.value)||0;
+  // Date/heure automatique
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const dateHeure = `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  // Période manuelle
+  const du = getDate('date-dd1','date-mm1','date-yyyy1');
+  const au = getDate('date-dd2','date-mm2','date-yyyy2');
+  const periode = du === au ? du : `${du} → ${au}`;
+  const nbJetons = Math.max(0, parseInt(document.getElementById('nb-jetons')?.value)||0);
+  const jetonVal = nbJetons * 2;
+  const tropVerse = Math.max(0, parseFloat(document.getElementById('trop-verse')?.value)||0);
+  const baseRev = Math.max(0, total - jetonVal - tropVerse);
+  const reverser = baseRev * (dep.pct/100);
+  const newEntry = {id:uid(), depId:currentDepId, date:dateHeure, periode, qtys, totalCB, totalEsp, total, nbJetons, jetonVal, tropVerse, reverser, ts:Date.now()};
+  allEntries.unshift(newEntry);
+  saveEntries(newEntry);
+  dep.products.forEach((_,i)=>{
+    const qEl=document.getElementById('p'+i+'-qty'); if(qEl) qEl.value='';
+    const cEl=document.getElementById('p'+i+'-ca');  if(cEl) cEl.value='';
+  });
+  const jetonEl = document.getElementById('nb-jetons'); if(jetonEl) jetonEl.value=0;
+  const tvEl2 = document.getElementById('trop-verse'); if(tvEl2) tvEl2.value='';
+  const cbEl=document.getElementById('d-cb'); if(cbEl) cbEl.value='';
+  const espEl=document.getElementById('d-esp'); if(espEl) espEl.value='';
+  const chkEl=document.getElementById('dispatch-check'); if(chkEl) chkEl.textContent='';
+  update(); renderHistory(dep); updateCumul(dep); updateRevSummary(dep); renderStock(dep); renderDashboard(dep);
+}
+
+// ── Render history ────────────────────────────────────────────────
+function renderHistory(dep) {
+  const entries = getEntries(dep.id);
+  const head = document.getElementById('hist-head');
+  const tbody = document.getElementById('history-body');
+  const count = document.getElementById('history-count');
+  const colSpan = 3 + dep.products.length*2 + 1;
+  head.innerHTML = '<th>Enregistré le</th><th>Période</th>' + dep.products.map(p=>`<th>${p.name}</th>`).join('') + '<th>Total</th><th>CB</th><th>Espèces</th><th>Jetons</th><th>Tips</th><th>Reversement</th><th></th>';
+  if(!entries.length){tbody.innerHTML=`<tr><td colspan="${colSpan+4}" class="empty-state">Aucune saisie.</td></tr>`;count.textContent='';return;}
+  count.textContent=entries.length+' entrée'+(entries.length>1?'s':'');
+  tbody.innerHTML=entries.map((e,i)=>{
+    const qtyCells = dep.products.map((_,pi)=>{ const q=e.qtys[pi]; if(!q) return '<td>—</td>'; return q.modeCA ? `<td style="color:#1e40af">${fmt(q.ca||0)}</td>` : `<td>${q.qty||0}</td>`; }).join('');
+    return `<tr><td style='white-space:nowrap;'>${e.date}</td><td style='white-space:nowrap;color:#1e40af;font-weight:500;'>${e.periode||'—'}</td>${qtyCells}<td class="td-total">${fmt(e.total)}</td><td>${fmt(e.totalCB)}</td><td>${fmt(e.totalEsp)}</td><td style="color:#b45309;font-weight:600;">${e.nbJetons||0} (${fmt(e.jetonVal||0)})</td><td style="color:#dc2626;font-weight:600;">${fmt(e.tropVerse||0)}</td><td class="td-rev">${fmt(e.reverser)}</td><td><button class="btn-del" data-eid="${e.id}" onclick="deleteEntry(this)">✕</button></td></tr>`;
+  }).join('');
+}
+
+function deleteEntry(btn) {
+  const id = btn.getAttribute('data-eid');
+  allEntries = allEntries.filter(e=>e.id!==id);
+  deleteFbEntry(id);
+  const dep=getDep(currentDepId);if(!dep)return;
+  renderHistory(dep); updateCumul(dep); updateRevSummary(dep); renderStock(dep); renderDashboard(dep);
+}
+
+function updateCumul(dep) {
+  const entries=getEntries(dep.id);
+  document.getElementById('c-total').textContent=fmt(entries.reduce((s,e)=>s+e.total,0));
+  document.getElementById('c-cb').textContent=fmt(entries.reduce((s,e)=>s+e.totalCB,0));
+  document.getElementById('c-esp').textContent=fmt(entries.reduce((s,e)=>s+e.totalEsp,0));
+  document.getElementById('c-jetons').textContent=fmt(entries.reduce((s,e)=>s+(e.jetonVal||0),0));
+  document.getElementById('c-tips').textContent=fmt(entries.reduce((s,e)=>s+(e.tropVerse||0),0));
+  document.getElementById('c-rev').textContent=fmt(entries.reduce((s,e)=>s+e.reverser,0));
+}
+
+// ── Reversements ──────────────────────────────────────────────────
+function updateRevSummary(dep) {
+  const entries=getEntries(dep.id);
+  const revs=getRevs(dep.id);
+  const du=entries.reduce((s,e)=>s+e.reverser,0);
+  const deja=revs.reduce((s,r)=>s+r.montant,0);
+  document.getElementById('rev-total-du').textContent=fmt(du);
+  document.getElementById('rev-deja').textContent=fmt(deja);
+  document.getElementById('rev-reste').textContent=fmt(Math.max(0,du-deja));
+}
+
+function saveRev() {
+  const montant=parseFloat(document.getElementById('rev-montant').value);
+  if(!montant||montant<=0)return;
+  const dep=getDep(currentDepId);if(!dep)return;
+  const du=allEntries.filter(e=>e.depId===dep.id).reduce((s,e)=>s+e.reverser,0);
+  const deja=allRevs.filter(r=>r.depId===dep.id).reduce((s,r)=>s+r.montant,0);
+  const reste=Math.max(0, du-deja);
+  const errEl=document.getElementById('rev-error');
+  if(montant > reste + 0.001) {
+    if(errEl) { errEl.textContent='⚠ Montant trop élevé ! Reste : '+fmt(reste); errEl.style.display='block'; }
+    return;
+  }
+  if(errEl) errEl.style.display='none';
+  const date=getDate('rev-dd','rev-mm','rev-yyyy');
+  const newRev={id:uid(), depId:currentDepId, date, montant, ts:Date.now()};
+  allRevs.unshift(newRev);
+  saveRevs(newRev);
+  document.getElementById('rev-montant').value='';
+  renderRevs(dep); updateRevSummary(dep);
+}
+
+function deleteRev(btn) {
+  const id = btn.getAttribute('data-rid');
+  allRevs=allRevs.filter(r=>r.id!==id);
+  if(window.fbDelete) window.fbDelete('revs', id);
+  const dep=getDep(currentDepId);if(!dep)return;
+  renderRevs(dep); updateRevSummary(dep);
+}
+
+function renderRevs(dep) {
+  const revs=getRevs(dep.id);
+  const tbody=document.getElementById('rev-body');
+  const count=document.getElementById('rev-count');
+  if(!revs.length){tbody.innerHTML='<tr><td colspan="3" class="empty-state">Aucun reversement.</td></tr>';count.textContent='';return;}
+  count.textContent=revs.length+' reversement'+(revs.length>1?'s':'');
+  tbody.innerHTML=revs.map(r=>`<tr><td>${r.date}</td><td class="td-rev">${fmt(r.montant)}</td><td><button class="btn-del" data-rid="${r.id}" onclick="deleteRev(this)">✕</button></td></tr>`).join('');
+}
+
+// ── Stock ─────────────────────────────────────────────────────────
+const TVA_RATES = [0, 5.5, 10, 20];
+
+function renderStock(dep) {
+  const el = document.getElementById('stock-content'); if(!el) return;
+  const printProducts = dep.products.filter(p=>p.isPrint);
+  const nonPrintProducts = dep.products.filter(p=>!p.isPrint);
+  let html = '';
+
+  // Shared stock for print products
+  if(printProducts.length > 0) {
+    const stocks = getSharedStocks(dep.id);
+    const totalFeuilles = getSharedStockTotal(dep.id);
+    const soldFeuilles = getTotalSoldFeuilles(dep.id);
+    const remaining = Math.max(0, totalFeuilles - soldFeuilles);
+    const lastStock = stocks.length ? stocks[stocks.length-1] : null;
+    const tva = lastStock ? lastStock.tva : 20;
+    const prixUnitaire = lastStock ? lastStock.prixAchat / 400 : 0;
+    html += `<div class="stock-product">
+      <div class="stock-product-name">📄 Stock commun feuilles — ${printProducts.map(p=>p.name).join(', ')}</div>
+      <div class="stock-stats">
+        <div class="stock-stat">Total feuilles achetées<span>${totalFeuilles}</span></div>
+        <div class="stock-stat">Feuilles vendues<span>${soldFeuilles}</span></div>
+        <div class="stock-stat ${remaining<20?'alert':''}">Feuilles restantes<span>${remaining}</span></div>
+        <div class="stock-stat">PA HT/feuille<span>${fmt(prixUnitaire)}</span></div>
+        <div class="stock-stat">TVA<span>${tva}%</span></div>
+      </div>
+      <div class="stock-appro">
+        <div class="stock-appro-title">+ Charger un rouleau</div>
+        <div class="stock-appro-form">
+          <div class="stock-appro-field"><label>Feuilles chargées</label><input type="number" id="appro-nb-${dep.id}" placeholder="400" min="1" style="width:80px;" oninput="updateCoutFeuille('${dep.id}')"/></div>
+          <div class="stock-appro-field"><label>Prix rouleau neuf HT (400 f.)</label><input type="number" id="appro-pa-${dep.id}" placeholder="0.00" min="0" step="0.01" style="width:100px;" oninput="updateCoutFeuille('${dep.id}')"/></div>
+          <div class="stock-appro-field"><label>Coût/feuille HT</label><input type="text" id="appro-cout-${dep.id}" readonly style="width:80px;background:#f0f9ff;color:#0369a1;font-weight:600;border-color:#bae6fd;" placeholder="—"/></div>
+          <div class="stock-appro-field"><label>TVA (%)</label><select id="appro-tva-${dep.id}" style="width:70px;">${TVA_RATES.map(r=>`<option value="${r}" ${r==tva?'selected':''}>${r}%</option>`).join('')}</select></div>
+          <button class="btn-appro" data-depid="${dep.id}" onclick="saveAppro(this.getAttribute('data-depid'))">Enregistrer</button>
+        </div>
+        ${stocks.length ? `<div class="stock-history">${stocks.slice().reverse().map(s=>`<div class="stock-history-row"><span>${s.date} · ${s.qty} feuilles chargées · PA rouleau ${fmt(s.prixAchat)} HT (400f.) · ${fmt(s.prixAchat/400)}/feuille · TVA ${s.tva}%</span><button class="btn-del" data-sid="${s.id}" data-depid="${dep.id}" onclick="deleteStock(this)" style="font-size:11px;padding:1px 5px;">✕</button></div>`).join('')}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // Individual stock per non-print product
+  nonPrintProducts.forEach(p => {
+    const stocks = getStocks(dep.id, p.name);
+    const totalStock = stocks.reduce((s,a)=>s+a.qty,0);
+    const sold = Math.round(getStockSold(dep.id, p.name, p.prix)*100)/100;
+    const remaining = Math.max(0, totalStock - sold);
+    const lastStock = stocks.length ? stocks[stocks.length-1] : null;
+    const prixAchat = lastStock ? lastStock.prixAchat : 0;
+    const tva = lastStock ? lastStock.tva : 20;
+    const key = dep.id+'-'+p.name.replace(/[^a-zA-Z0-9]/g,'_');
+    html += `<div class="stock-product">
+      <div class="stock-product-name">📦 ${p.name} — Prix vente : ${fmt(p.prix)}</div>
+      <div class="stock-stats">
+        <div class="stock-stat">Stock total<span>${totalStock}</span></div>
+        <div class="stock-stat">Vendu<span>${sold}</span></div>
+        <div class="stock-stat ${remaining<5?'alert':''}">Restant<span>${remaining}</span></div>
+        <div class="stock-stat">PA HT<span>${fmt(prixAchat)}</span></div>
+        <div class="stock-stat">TVA<span>${tva}%</span></div>
+      </div>
+      <div class="stock-appro">
+        <div class="stock-appro-title">+ Approvisionner</div>
+        <div class="stock-appro-form">
+          <div class="stock-appro-field"><label>Quantité</label><input type="number" id="appro-qty-${key}" placeholder="0" min="0" style="width:80px;"/></div>
+          <div class="stock-appro-field"><label>PA HT (€)</label><input type="number" id="appro-pa2-${key}" placeholder="0.00" min="0" step="0.01" style="width:90px;"/></div>
+          <div class="stock-appro-field"><label>TVA (%)</label><select id="appro-tva2-${key}" style="width:70px;">${TVA_RATES.map(r=>`<option value="${r}" ${r==tva?'selected':''}>${r}%</option>`).join('')}</select></div>
+          <button class="btn-appro" data-depid="${dep.id}" data-prodname="${p.name}" onclick="saveApproInd(this)">Enregistrer</button>
+        </div>
+        ${stocks.length ? `<div class="stock-history">${stocks.slice().reverse().map(s=>`<div class="stock-history-row"><span>${s.date} · +${s.qty} · PA ${fmt(s.prixAchat)} HT · TVA ${s.tva}%</span><button class="btn-del" data-sid="${s.id}" data-depid="${dep.id}" onclick="deleteStock(this)" style="font-size:11px;padding:1px 5px;">✕</button></div>`).join('')}</div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  if(!printProducts.length && !nonPrintProducts.length) {
+    html = '<div class="empty-state">Aucun produit défini pour ce dépositaire.</div>';
+  }
+  el.innerHTML = html;
+}
+
+function updateCoutFeuille(depId) {
+  const pa = parseFloat(document.getElementById('appro-pa-'+depId)?.value)||0;
+  const el = document.getElementById('appro-cout-'+depId);
+  if(el) el.value = pa > 0 ? (pa/400).toFixed(4)+' €' : '—';
+}
+
+function saveAppro(depId) {
+  const nbFeuilles = parseInt(document.getElementById('appro-nb-'+depId)?.value)||0;
+  const prixAchat = parseFloat(document.getElementById('appro-pa-'+depId)?.value)||0;
+  const tva = parseFloat(document.getElementById('appro-tva-'+depId)?.value)||0;
+  if(nbFeuilles<=0) return;
+  const now = new Date();
+  const date = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+  // qty = nb feuilles, store nbFeuilles and prixAchat (rouleau)
+  const stock = {id:uid(), depId, prodName:'_shared_', qty:nbFeuilles, nbFeuilles, prixAchat, tva, date, ts:Date.now()};
+  allStocks.push(stock);
+  if(window.fbSave) window.fbSave('stocks', stock.id, stock);
+  renderStock(getDep(depId));
+  renderDashboard(getDep(depId));
+}
+
+function saveApproInd(btn) {
+  const depId = btn.getAttribute('data-depid');
+  const prodName = btn.getAttribute('data-prodname');
+  const key = depId+'-'+prodName.replace(/[^a-zA-Z0-9]/g,'_');
+  const qty = parseInt(document.getElementById('appro-qty-'+key)?.value)||0;
+  const prixAchat = parseFloat(document.getElementById('appro-pa2-'+key)?.value)||0;
+  const tva = parseFloat(document.getElementById('appro-tva2-'+key)?.value)||0;
+  if(qty<=0) return;
+  const now = new Date();
+  const date = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+  const stock = {id:uid(), depId, prodName, qty, prixAchat, tva, date, ts:Date.now()};
+  allStocks.push(stock);
+  if(window.fbSave) window.fbSave('stocks', stock.id, stock);
+  renderStock(getDep(depId));
+  renderDashboard(getDep(depId));
+}
+
+function deleteStock(btn) {
+  const id = btn.getAttribute('data-sid');
+  const depId = btn.getAttribute('data-depid');
+  allStocks = allStocks.filter(s=>s.id!==id);
+  if(window.fbDelete) window.fbDelete('stocks', id);
+  const dep = getDep(depId);
+  if(dep) { renderStock(dep); renderDashboard(dep); }
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────
+function renderDashboard(dep) {
+  const el = document.getElementById('dashboard-content'); if(!el) return;
+  const totalVerse = getRevs(dep.id).reduce((s,r)=>s+r.montant,0);
+  const totalDu = getEntries(dep.id).reduce((s,e)=>s+e.reverser,0);
+  let grandCATTC=0, grandCAHT=0, grandCoutAchat=0;
+
+  // Shared stock cost per feuille (for print products)
+  const sharedStocks = getSharedStocks(dep.id);
+  const lastShared = sharedStocks.length ? sharedStocks[sharedStocks.length-1] : null;
+  const prixUnitairePrint = lastShared ? lastShared.prixAchat / 400 : 0;
+
+  const rows = dep.products.map(p => {
+    const sold = getStockSold(dep.id, p.name, p.prix);
+    const caTTC = sold * p.prix;
+    // TVA and cost depend on product type
+    let tva, prixUnitaire;
+    if(p.isPrint) {
+      tva = lastShared ? lastShared.tva : 20;
+      prixUnitaire = prixUnitairePrint;
+    } else {
+      const indStocks = getStocks(dep.id, p.name);
+      const lastInd = indStocks.length ? indStocks[indStocks.length-1] : null;
+      tva = lastInd ? lastInd.tva : 20;
+      prixUnitaire = lastInd ? lastInd.prixAchat : 0;
+    }
+    const caHT = caTTC / (1 + tva/100);
+    const coutAchat = sold * prixUnitaire;
+    grandCATTC+=caTTC; grandCAHT+=caHT; grandCoutAchat+=coutAchat;
+    return `<div class="dashboard-product">
+      <div class="dashboard-product-name">${p.name}</div>
+      <div class="dashboard-grid">
+        <div class="dashboard-stat"><div class="dashboard-stat-label">Qté vendue</div><div class="dashboard-stat-value">${Math.round(sold*100)/100}</div></div>
+        <div class="dashboard-stat"><div class="dashboard-stat-label">CA TTC</div><div class="dashboard-stat-value blue">${fmt(caTTC)}</div></div>
+        <div class="dashboard-stat"><div class="dashboard-stat-label">CA HT</div><div class="dashboard-stat-value blue">${fmt(caHT)}</div></div>
+        <div class="dashboard-stat"><div class="dashboard-stat-label">Coût achat</div><div class="dashboard-stat-value orange">${fmt(coutAchat)}</div></div>
+        <div class="dashboard-stat"><div class="dashboard-stat-label">TVA (${tva}%)</div><div class="dashboard-stat-value">${fmt(caTTC-caHT)}</div></div>
+        <div class="dashboard-stat"><div class="dashboard-stat-label">Marge brute HT</div><div class="dashboard-stat-value ${(caHT-coutAchat)>=0?'green':'red'}">${fmt(caHT-coutAchat)}</div></div>
+        <div class="dashboard-stat"><div class="dashboard-stat-label">Marge brute %</div><div class="dashboard-stat-value ${caHT>0&&(caHT-coutAchat)>=0?'green':'red'}">${caHT>0?Math.round(((caHT-coutAchat)/caHT)*100):0} %</div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const revDep = allEntries.filter(e=>e.depId===dep.id).reduce((s,e)=>s+e.reverser,0);
+  const margeNette = grandCAHT - grandCoutAchat - totalVerse;
+
+  el.innerHTML = rows + `<div class="dashboard-total">
+    <div class="dashboard-total-stat"><div class="dashboard-total-label">CA TTC total</div><div class="dashboard-total-value">${fmt(grandCATTC)}</div></div>
+    <div class="dashboard-total-stat"><div class="dashboard-total-label">CA HT total</div><div class="dashboard-total-value">${fmt(grandCAHT)}</div></div>
+    <div class="dashboard-total-stat"><div class="dashboard-total-label">Coût achat total</div><div class="dashboard-total-value">${fmt(grandCoutAchat)}</div></div>
+    <div class="dashboard-total-stat"><div class="dashboard-total-label">Dû dépositaire</div><div class="dashboard-total-value">${fmt(totalDu)}</div></div>
+    <div class="dashboard-total-stat"><div class="dashboard-total-label">Reversé dépositaire</div><div class="dashboard-total-value">${fmt(totalVerse)}</div></div>
+    <div class="dashboard-total-stat"><div class="dashboard-total-label">Marge nette HT</div><div class="dashboard-total-value ${margeNette>=0?'green':'red'}">${fmt(margeNette)}</div></div>
+    <div class="dashboard-total-stat"><div class="dashboard-total-label">Marge nette %</div><div class="dashboard-total-value ${grandCAHT>0&&margeNette>=0?'green':'red'}">${grandCAHT>0?Math.round((margeNette/grandCAHT)*100):0} %</div></div>
+  </div>`;
+}
+
+// ── Export / Import ───────────────────────────────────────────────
+function exportData() {
+  const data = {
+    version: 1,
+    exportDate: new Date().toISOString(),
+    deps,
+    allEntries,
+    allRevs,
+    allStocks
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2,'0')+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+now.getFullYear();
+  a.href = url;
+  a.download = `easy-caisse-backup-${d}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportCSV() {
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2,'0')+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+now.getFullYear();
+
+  let csv = '';
+
+  // ── Saisies ──
+  csv += 'HISTORIQUE DES SAISIES\n';
+  csv += 'Dépositaire;Date;';
+  // Get all unique product names across all deps
+  const allProdNames = [...new Set(deps.flatMap(d=>d.products.map(p=>p.name)))];
+  csv += allProdNames.join(';') + ';Total TTC;CB;Espèces;Jetons;Tips;Reversement\n';
+  allEntries.forEach(e => {
+    const dep = getDep(e.depId);
+    if(!dep) return;
+    const prodCols = allProdNames.map(name => {
+      const pi = dep.products.findIndex(p=>p.name===name);
+      if(pi===-1) return '';
+      const q = e.qtys[pi];
+      if(!q) return '0';
+      return q.modeCA ? fmt(q.ca||0) : (q.qty||0);
+    });
+    csv += `${dep.name} — ${dep.lieu||''};${e.date};${prodCols.join(';')};${fmt(e.total)};${fmt(e.totalCB)};${fmt(e.totalEsp)};${e.nbJetons||0} (${fmt(e.jetonVal||0)});${fmt(e.tropVerse||0)};${fmt(e.reverser)}\n`;
+  });
+
+  csv += '\n';
+
+  // ── Reversements ──
+  csv += 'REVERSEMENTS AU DÉPOSITAIRE\n';
+  csv += 'Dépositaire;Date;Montant reversé\n';
+  allRevs.forEach(r => {
+    const dep = getDep(r.depId);
+    if(!dep) return;
+    csv += `${dep.name} — ${dep.lieu||''};${r.date};${fmt(r.montant)}\n`;
+  });
+
+  csv += '\n';
+
+  // ── Stock ──
+  csv += 'GESTION DU STOCK\n';
+  csv += 'Dépositaire;Produit;Date;Feuilles chargées;PA rouleau HT (400f.);Coût feuilles chargées HT;Coût/feuille HT;TVA\n';
+  allStocks.forEach(s => {
+    const dep = getDep(s.depId);
+    if(!dep) return;
+    if(s.prodName === '_shared_') {
+      const coutFeuilles = (s.prixAchat / 400) * s.qty;
+      const coutParFeuille = s.prixAchat / 400;
+      csv += `${dep.name} — ${dep.lieu||''};Feuilles (commun);${s.date};${s.qty};${fmt(s.prixAchat)};${fmt(coutFeuilles)};${fmt(coutParFeuille)};${s.tva}%\n`;
+    } else {
+      csv += `${dep.name} — ${dep.lieu||''};${s.prodName};${s.date};${s.qty};${fmt(s.prixAchat)};;${fmt(s.prixAchat)};${s.tva}%\n`;
+    }
+  });
+
+  // BOM for Excel UTF-8
+  const bom = '\uFEFF';
+  const blob = new Blob([bom + csv], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `easy-caisse-${d}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data.version || !data.deps) { alert('Fichier invalide.'); return; }
+      // Save all to Firebase
+      for(const dep of data.deps) {
+        if(window.fbSave) await window.fbSave('deps', dep.id, dep);
+      }
+      for(const entry of data.allEntries) {
+        if(window.fbSave) await window.fbSave('entries', entry.id, entry);
+      }
+      for(const rev of data.allRevs) {
+        if(window.fbSave) await window.fbSave('revs', rev.id, rev);
+      }
+      for(const stock of data.allStocks) {
+        if(window.fbSave) await window.fbSave('stocks', stock.id, stock);
+      }
+      // Update local
+      deps = data.deps;
+      allEntries = data.allEntries;
+      allRevs = data.allRevs;
+      allStocks = data.allStocks;
+      renderDepList(); renderDepSelect();
+      const ok = document.getElementById('backup-ok');
+      if(ok) { ok.style.display='inline'; setTimeout(()=>ok.style.display='none', 3000); }
+    } catch(err) {
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ── Print recap ───────────────────────────────────────────────────
+function dateToNum(str) {
+  if (!str) return 0;
+  const p = str.split('/');
+  if (p.length !== 3) return 0;
+  return parseInt(p[2])*10000 + parseInt(p[1])*100 + parseInt(p[0]);
+}
+
+function printRecap(allData) {
+  const dep = getDep(currentDepId); if (!dep) return;
+  let entries = getEntries(dep.id);
+  let revs = getRevs(dep.id);
+  let periodLabel = 'Toutes les données';
+
+  if (!allData) {
+    const d1 = getDate('rp-dd1','rp-mm1','rp-yyyy1');
+    const d2 = getDate('rp-dd2','rp-mm2','rp-yyyy2');
+    const n1 = dateToNum(d1), n2 = dateToNum(d2);
+    entries = entries.filter(e => { const n=dateToNum(e.date); return n>=n1 && n<=n2; });
+    revs = revs.filter(r => { const n=dateToNum(r.date); return n>=n1 && n<=n2; });
+    periodLabel = 'Du ' + d1 + ' au ' + d2;
+  }
+
+  const totalEnc = entries.reduce((s,e)=>s+e.total,0);
+  const totalCB  = entries.reduce((s,e)=>s+e.totalCB,0);
+  const totalEsp = entries.reduce((s,e)=>s+e.totalEsp,0);
+  const totalRev = entries.reduce((s,e)=>s+e.reverser,0);
+  const totalVerse = revs.reduce((s,r)=>s+r.montant,0);
+  const resteRev = Math.max(0, totalRev - totalVerse);
+
+  const entryCols = dep.products.map(p=>'<th>'+p.name+' CB</th><th>'+p.name+' esp.</th>').join('');
+  const entryRows = entries.length
+    ? entries.map(e => {
+        const qtyCells = dep.products.map((_,pi)=>'<td>'+(e.qtys[pi]?e.qtys[pi].cb:0)+'</td><td>'+(e.qtys[pi]?e.qtys[pi].esp:0)+'</td>').join('');
+        return '<tr><td>'+e.date+'</td>'+qtyCells+'<td class="td-total">'+fmt(e.total)+'</td><td>'+fmt(e.totalCB)+'</td><td>'+fmt(e.totalEsp)+'</td><td class="td-rev">'+fmt(e.reverser)+'</td></tr>';
+      }).join('')
+    : '<tr><td colspan="99" style="text-align:center;color:#9b9b97;padding:12px;">Aucune saisie sur cette période.</td></tr>';
+
+  const revRows = revs.length
+    ? revs.map(r=>'<tr><td>'+r.date+'</td><td class="td-rev">'+fmt(r.montant)+'</td></tr>').join('')
+    : '<tr><td colspan="2" style="text-align:center;color:#9b9b97;padding:12px;">Aucun reversement sur cette période.</td></tr>';
+
+  const now = new Date();
+  const printDate = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Récapitulatif - ${dep.name}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #fff; color: #1a1a18; padding: 24px; font-size: 13px; }
+  .print-header { border-bottom: 2px solid #1a1a18; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .print-title { font-size: 22px; font-weight: 700; }
+  .print-sub { font-size: 12px; color: #6b6b67; margin-top: 4px; }
+  .print-period { font-size: 12px; color: #6b6b67; text-align: right; }
+  .print-section { margin-bottom: 24px; }
+  .print-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6b6b67; border-bottom: 1px solid #e0dfd8; padding-bottom: 5px; margin-bottom: 12px; }
+  .print-summary { display: flex; gap: 12px; margin-bottom: 14px; }
+  .print-stat { flex: 1; border: 1px solid #e0dfd8; border-radius: 6px; padding: 8px 12px; }
+  .print-stat-label { font-size: 10px; color: #6b6b67; margin-bottom: 4px; }
+  .print-stat-value { font-size: 17px; font-weight: 700; color: #1a1a18; }
+  .print-stat-value.green { color: #065f46; }
+  .print-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .print-table th { background: #f4f4f0; padding: 7px 10px; text-align: left; border: 1px solid #e0dfd8; font-weight: 600; font-size: 11px; color: #6b6b67; }
+  .print-table th:last-child { text-align: right; }
+  .print-table td { padding: 7px 10px; border: 1px solid #e8e8e4; }
+  .print-table td:last-child { text-align: right; font-weight: 600; color: #065f46; }
+  .print-footer { border-top: 1px solid #e0dfd8; padding-top: 10px; font-size: 10px; color: #9b9b97; display: flex; justify-content: space-between; margin-top: 24px; }
+  .empty { text-align: center; color: #9b9b97; padding: 12px; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="print-header">
+  <div>
+    <div class="print-title">Easy Caisse</div>
+    <div class="print-sub">${dep.name}${dep.lieu ? ' — ' + dep.lieu : ''} · Dépositaire ${dep.pct}%</div>
+  </div>
+  <div class="print-period">
+    <div>${periodLabel}</div>
+    <div style="margin-top:4px;">Imprimé le ${printDate}</div>
+  </div>
+</div>
+
+<div class="print-section">
+  <div class="print-section-title">Cumul global</div>
+  <div class="print-summary">
+    <div class="print-stat"><div class="print-stat-label">Total encaissé</div><div class="print-stat-value">${fmt(totalEnc)}</div></div>
+    <div class="print-stat"><div class="print-stat-label">Dont CB</div><div class="print-stat-value">${fmt(totalCB)}</div></div>
+    <div class="print-stat"><div class="print-stat-label">Dont espèces</div><div class="print-stat-value">${fmt(totalEsp)}</div></div>
+    <div class="print-stat"><div class="print-stat-label">Total à reverser (${dep.pct}%)</div><div class="print-stat-value green">${fmt(totalRev)}</div></div>
+  </div>
+</div>
+
+<div class="print-section">
+  <div class="print-section-title">Reversements au dépositaire</div>
+  <div class="print-summary" style="margin-bottom:14px;">
+    <div class="print-stat"><div class="print-stat-label">Total dû au dépositaire</div><div class="print-stat-value green">${fmt(totalRev)}</div></div>
+    <div class="print-stat"><div class="print-stat-label">Déjà reversé</div><div class="print-stat-value">${fmt(totalVerse)}</div></div>
+    <div class="print-stat"><div class="print-stat-label">Reste à reverser</div><div class="print-stat-value green">${fmt(resteRev)}</div></div>
+  </div>
+  <table class="print-table">
+    <thead><tr><th>Date du reversement</th><th>Montant reversé</th></tr></thead>
+    <tbody>${revRows}</tbody>
+  </table>
+</div>
+
+<div class="print-footer">
+  <span>Easy Caisse — ${dep.name}${dep.lieu ? ' — ' + dep.lieu : ''}</span>
+  <span>${periodLabel} · Imprimé le ${printDate}</span>
+</div>
+</body>
+</html>`;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:9999;';
+  document.body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  setTimeout(() => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+  }, 400);
+}
+
+function initRecapSelects() {
+  buildSelects('rp-dd1','rp-mm1','rp-yyyy1');
+  buildSelects('rp-dd2','rp-mm2','rp-yyyy2');
+  buildSelects('date-dd1','date-mm1','date-yyyy1');
+  buildSelects('date-dd2','date-mm2','date-yyyy2');
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+// Show loading until Firebase connects
+document.body.insertAdjacentHTML('afterbegin',
+  '<div id="fb-loading" style="position:fixed;top:0;left:0;width:100%;background:#1a1a18;color:#fff;text-align:center;padding:10px;font-size:13px;z-index:9999;">⏳ Connexion à la base de données...</div>'
+);
+setTimeout(() => {
+  const el = document.getElementById('fb-loading');
+  if(el) el.remove();
+  renderDepList();
+  renderDepSelect();
+}, 2000);
+</script>
+</body>
+</html>
