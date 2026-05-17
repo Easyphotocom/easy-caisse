@@ -1538,7 +1538,7 @@ function printRecap(allData) {
     ? revs.map(r=>{
         const isCB = r.mode==='cb';
         const modeLabel = isCB ? '💳 CB' : '💵 Espèces';
-        const mention = isCB ? ' <em style="color:#1e40af;font-size:10px;">— Facture à produire</em>' : '';
+        const mention = isCB ? ' <em style="color:#1e40af;font-size:10px;">— Facture à produire par le dépositaire</em>' : '';
         const montantLabel = isCB ? fmt(r.montant)+' HT' : fmt(r.montant);
         return '<tr><td>'+r.date+'</td><td>'+modeLabel+mention+'</td><td style="text-align:right;font-weight:600;color:'+(isCB?'#1e40af':'#065f46')+';">'+montantLabel+'</td></tr>';
       }).join('')
