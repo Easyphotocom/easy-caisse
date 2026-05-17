@@ -1144,8 +1144,14 @@ function saveRev() {
   const dep=getDep(currentDepId);if(!dep)return;
   const entries=allEntries.filter(e=>e.depId===dep.id);
   const revs=allRevs.filter(r=>r.depId===dep.id);
-  const duEsp=entries.reduce((s,e)=>s+(e.reverserEsp||0),0);
-  const duCB=entries.reduce((s,e)=>s+(e.reverserCBht||0),0);
+  const duEsp=entries.reduce((s,e)=>{
+    if(e.reverserEsp!==undefined) return s+(e.reverserEsp||0);
+    return s+(e.reverser||0);
+  },0);
+  const duCB=entries.reduce((s,e)=>{
+    if(e.reverserCBht!==undefined) return s+(e.reverserCBht||0);
+    return s;
+  },0);
   const dejaEsp=revs.filter(r=>r.mode==='esp').reduce((s,r)=>s+r.montant,0);
   const dejaCB=revs.filter(r=>r.mode==='cb').reduce((s,r)=>s+r.montant,0);
   const resteEsp=Math.max(0,duEsp-dejaEsp);
