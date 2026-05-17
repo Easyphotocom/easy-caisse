@@ -398,13 +398,28 @@
       <p class="section-title">Nouvelle saisie</p>
       <div style="margin-bottom:1rem;">
         <div class="field-group">
-          <label class="field-label">Date <span style="font-size:11px;color:#9b9b97;">(JJ / MM / AAAA)</span></label>
-          <div class="date-row">
-            <select class="sel-day" id="date-dd"></select>
-            <span class="date-sep">/</span>
-            <select class="sel-mon" id="date-mm"></select>
-            <span class="date-sep">/</span>
-            <select class="sel-yr" id="date-yyyy"></select>
+          <label class="field-label">Période de la saisie</label>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#6b6b67;width:30px;flex-shrink:0;">Du</span>
+              <div class="date-row">
+                <select class="sel-day" id="date-dd1"></select>
+                <span class="date-sep">/</span>
+                <select class="sel-mon" id="date-mm1"></select>
+                <span class="date-sep">/</span>
+                <select class="sel-yr" id="date-yyyy1"></select>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#6b6b67;width:30px;flex-shrink:0;">Au</span>
+              <div class="date-row">
+                <select class="sel-day" id="date-dd2"></select>
+                <span class="date-sep">/</span>
+                <select class="sel-mon" id="date-mm2"></select>
+                <span class="date-sep">/</span>
+                <select class="sel-yr" id="date-yyyy2"></select>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -844,7 +859,8 @@ function selectDep(id) {
   zone.style.display='block';
   document.getElementById('t-rev-label').textContent = `À reverser (${dep.pct} %)`;
   renderProducts(dep);
-  buildSelects('date-dd','date-mm','date-yyyy');
+  buildSelects('date-dd1','date-mm1','date-yyyy1');
+  buildSelects('date-dd2','date-mm2','date-yyyy2');
   buildSelects('rev-dd','rev-mm','rev-yyyy');
   renderHistory(dep);
   updateCumul(dep);
