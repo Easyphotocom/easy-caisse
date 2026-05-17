@@ -135,32 +135,11 @@
     .global-stat-value { font-size: 15px; font-weight: 600; color: #fff; }
     .global-stat-value.green { color: #34d399; }
 
-    /* Scanner */
-    .btn-scan { width: 100%; padding: 13px; background: #1e40af; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; color: #fff; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .btn-scan:active { background: #1d4ed8; }
-    .scan-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 200; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .scan-modal.show { display: flex; }
-    .scan-preview { width: 100%; max-height: 40vh; object-fit: contain; border-radius: 10px; margin-bottom: 16px; }
-    .scan-result { background: #fff; border-radius: 10px; padding: 14px; width: 100%; margin-bottom: 12px; }
-    .scan-result-title { font-size: 12px; font-weight: 600; color: #6b6b67; text-transform: uppercase; margin-bottom: 8px; }
-    .scan-field { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f0f0ee; }
-    .scan-field:last-child { border-bottom: none; }
-    .scan-field-label { font-size: 13px; color: #6b6b67; }
-    .scan-field-value { font-size: 15px; font-weight: 600; color: #1a1a18; }
-    .scan-field-input { width: 80px; text-align: center; font-size: 15px; font-weight: 600; border: 1px solid #d4d3cb; border-radius: 6px; height: 34px; padding: 0 6px; }
-    .scan-loading { color: #fff; font-size: 14px; font-weight: 600; text-align: center; }
-    .scan-spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .scan-btns { display: flex; gap: 10px; width: 100%; }
-    .btn-scan-ok { flex: 1; padding: 13px; background: #1a1a18; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; color: #fff; cursor: pointer; }
-    .btn-scan-cancel { flex: 1; padding: 13px; background: #f4f4f0; border: 1px solid #d4d3cb; border-radius: 10px; font-size: 14px; font-weight: 600; color: #1a1a18; cursor: pointer; }
+
 
     select { outline: none; }
     input:focus { outline: none; border-color: #555; }
   </style>
-
-  <!-- Tesseract OCR -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
 
   <!-- Firebase -->
   <script type="module">
@@ -374,20 +353,37 @@
 </div>
 
 <!-- Bottom nav -->
-<!-- Scan modal -->
-<div class="scan-modal" id="scan-modal">
-  <img id="scan-img" class="scan-preview" style="display:none;"/>
-  <div id="scan-loading" style="display:none;">
-    <div class="scan-spinner"></div>
-    <div class="scan-loading">Analyse en cours...</div>
-  </div>
-  <div class="scan-result" id="scan-result" style="display:none;">
-    <div class="scan-result-title">Valeurs détectées — vérifiez et ajustez</div>
-    <div id="scan-fields"></div>
-  </div>
-  <div class="scan-btns">
-    <button class="btn-scan-cancel" onclick="closeScan()">✕ Annuler</button>
-    <button class="btn-scan-ok" id="btn-scan-ok" style="display:none;" onclick="applyScan()">✓ Appliquer</button>
+
+
+<!-- ÉCRAN 5 : Impression -->
+<div class="screen" id="screen-print">
+  <div class="card">
+    <p class="card-title">🖨️ Récapitulatif</p>
+    <div style="margin-bottom:12px;">
+      <p class="section-label">Période</p>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:12px;color:#6b6b67;width:25px;">Du</span>
+        <div class="date-row-mobile" style="flex:1;">
+          <select class="date-sel-mobile" id="m-pr-dd1"></select>
+          <span style="color:#9b9b97;">/</span>
+          <select class="date-sel-mobile" id="m-pr-mm1"></select>
+          <span style="color:#9b9b97;">/</span>
+          <select class="date-sel-mobile" id="m-pr-yyyy1"></select>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:#6b6b67;width:25px;">Au</span>
+        <div class="date-row-mobile" style="flex:1;">
+          <select class="date-sel-mobile" id="m-pr-dd2"></select>
+          <span style="color:#9b9b97;">/</span>
+          <select class="date-sel-mobile" id="m-pr-mm2"></select>
+          <span style="color:#9b9b97;">/</span>
+          <select class="date-sel-mobile" id="m-pr-yyyy2"></select>
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="printRecapM(false)" style="margin-bottom:8px;">🖨️ Imprimer la période</button>
+    <button class="btn-secondary" onclick="printRecapM(true)">📋 Toutes les données</button>
   </div>
 </div>
 
@@ -407,6 +403,10 @@
   <button class="nav-btn" id="nav-stock" onclick="goScreen('stock')">
     <span class="nav-btn-icon">📦</span>
     <span>Stock</span>
+  </button>
+  <button class="nav-btn" id="nav-print" onclick="goScreen('print')">
+    <span class="nav-btn-icon">🖨️</span>
+    <span>PDF</span>
   </button>
 </div>
 
@@ -474,7 +474,7 @@ function goScreen(name) {
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
-  const steps={dep:'1 / 4',saisie:'2 / 4',rev:'3 / 4',stock:'4 / 4'};
+  const steps={dep:'1 / 5',saisie:'2 / 5',rev:'3 / 5',stock:'4 / 5',print:'5 / 5'};
   document.getElementById('top-step').textContent=steps[name];
 }
 
@@ -532,6 +532,8 @@ function selectDepM(id){
   renderStockM(dep);
   renderEntryListM(dep);
   renderMiniDash(dep);
+  buildSel('m-pr-dd1','m-pr-mm1','m-pr-yyyy1');
+  buildSel('m-pr-dd2','m-pr-mm2','m-pr-yyyy2');
   goScreen('saisie');
 }
 
@@ -1084,6 +1086,108 @@ function closeScan() {
   document.getElementById('scan-loading').style.display = 'none';
   document.getElementById('scan-result').style.display = 'none';
   document.getElementById('btn-scan-ok').style.display = 'none';
+}
+
+// ── Print Recap Mobile ────────────────────────────────────────────
+function printRecapM(allData) {
+  const dep = getDep(currentDepId); if(!dep) return;
+  let entries = getEntries(dep.id);
+  let revs = getRevs(dep.id);
+  let periodLabel = 'Toutes les données';
+
+  if(!allData) {
+    const d1 = getDate('m-pr-dd1','m-pr-mm1','m-pr-yyyy1');
+    const d2 = getDate('m-pr-dd2','m-pr-mm2','m-pr-yyyy2');
+    const dateToNum = str => { const p=str.split('/'); if(p.length!==3) return 0; return parseInt(p[2])*10000+parseInt(p[1])*100+parseInt(p[0]); };
+    const n1=dateToNum(d1), n2=dateToNum(d2);
+    entries = entries.filter(e=>{ const n=dateToNum(e.date); return n>=n1&&n<=n2; });
+    revs = revs.filter(r=>{ const n=dateToNum(r.date); return n>=n1&&n<=n2; });
+    periodLabel = 'Du '+d1+' au '+d2;
+  }
+
+  const totalEnc=entries.reduce((s,e)=>s+e.total,0);
+  const totalCB=entries.reduce((s,e)=>s+e.totalCB,0);
+  const totalEsp=entries.reduce((s,e)=>s+e.totalEsp,0);
+  const totalRev=entries.reduce((s,e)=>s+e.reverser,0);
+  const totalVerse=revs.reduce((s,r)=>s+r.montant,0);
+  const resteRev=Math.max(0,totalRev-totalVerse);
+  const duEsp=entries.reduce((s,e)=>{ if(e.reverserEsp!==undefined) return s+(e.reverserEsp||0); return s+(e.reverser||0); },0);
+  const duCB=entries.reduce((s,e)=>s+(e.reverserCBht||0),0);
+  const dejaEsp=revs.filter(r=>r.mode==='esp').reduce((s,r)=>s+r.montant,0);
+  const dejaCB=revs.filter(r=>r.mode==='cb').reduce((s,r)=>s+r.montant,0);
+
+  const now=new Date();
+  const printDate=String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+
+  const revRows = revs.length
+    ? revs.map(r=>{
+        const isCB=r.mode==='cb';
+        const mention=isCB?' <em style="color:#1e40af;font-size:10px;">— Facture à produire par le dépositaire</em>':'';
+        return '<tr><td>'+r.date+'</td><td>'+(isCB?'💳 CB':'💵 Espèces')+mention+'</td><td style="text-align:right;font-weight:600;color:'+(isCB?'#1e40af':'#065f46')+';">'+(isCB?fmt(r.montant)+' HT':fmt(r.montant))+'</td></tr>';
+      }).join('')
+    : '<tr><td colspan="3" style="text-align:center;color:#9b9b97;padding:10px;">Aucun reversement.</td></tr>';
+
+  const html = `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Récapitulatif - ${dep.name}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:system-ui,-apple-system,sans-serif;background:#fff;color:#1a1a18;padding:16px;font-size:12px;}
+  .hdr{border-bottom:2px solid #1a1a18;padding-bottom:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;}
+  .ttl{font-size:18px;font-weight:700;}.sub{font-size:10px;color:#6b6b67;margin-top:2px;}
+  .per{font-size:10px;color:#6b6b67;text-align:right;}
+  .sec{margin-bottom:16px;}.sec-ttl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#6b6b67;border-bottom:1px solid #e0dfd8;padding-bottom:4px;margin-bottom:8px;}
+  .stats{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .stat{flex:1;min-width:70px;border:1px solid #e0dfd8;border-radius:5px;padding:5px 8px;}
+  .stat-l{font-size:9px;color:#6b6b67;margin-bottom:2px;}.stat-v{font-size:13px;font-weight:700;color:#1a1a18;}
+  .stat-v.green{color:#065f46;}
+  table{width:100%;border-collapse:collapse;font-size:11px;}
+  th{background:#f4f4f0;padding:5px 7px;text-align:left;border:1px solid #e0dfd8;font-weight:600;font-size:10px;color:#6b6b67;}
+  td{padding:5px 7px;border:1px solid #e8e8e4;}
+  .ftr{border-top:1px solid #e0dfd8;padding-top:8px;font-size:9px;color:#9b9b97;display:flex;justify-content:space-between;margin-top:16px;}
+</style></head><body>
+<div class="hdr">
+  <div><div class="ttl">Easy Caisse</div><div class="sub">${dep.name}${dep.lieu?' — '+dep.lieu:''} · ${dep.pct}%</div></div>
+  <div class="per"><div>${periodLabel}</div><div>Imprimé le ${printDate}</div></div>
+</div>
+<div class="sec">
+  <div class="sec-ttl">Cumul global</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-l">Total encaissé</div><div class="stat-v">${fmt(totalEnc)}</div></div>
+    <div class="stat"><div class="stat-l">Dont CB</div><div class="stat-v">${fmt(totalCB)}</div></div>
+    <div class="stat"><div class="stat-l">Dont espèces</div><div class="stat-v">${fmt(totalEsp)}</div></div>
+    <div class="stat"><div class="stat-l">À reverser</div><div class="stat-v green">${fmt(totalRev)}</div></div>
+  </div>
+</div>
+<div class="sec">
+  <div class="sec-ttl">Reversements au dépositaire</div>
+  <table style="margin-bottom:8px;">
+    <thead><tr><th></th><th style="text-align:right;color:#065f46;">💵 Espèces</th><th style="text-align:right;color:#1e40af;">💳 CB HT</th><th style="text-align:right;">Total</th></tr></thead>
+    <tbody>
+      <tr><td style="font-weight:600;">Total dû</td><td style="text-align:right;color:#065f46;font-weight:600;">${fmt(duEsp)}</td><td style="text-align:right;color:#1e40af;font-weight:600;">${fmt(duCB)}</td><td style="text-align:right;font-weight:700;">${fmt(totalRev)}</td></tr>
+      <tr><td style="font-weight:600;">Déjà reversé</td><td style="text-align:right;">${fmt(dejaEsp)}</td><td style="text-align:right;">${fmt(dejaCB)}</td><td style="text-align:right;font-weight:600;">${fmt(totalVerse)}</td></tr>
+      <tr style="background:#f9f9f7;"><td style="font-weight:700;">Reste</td><td style="text-align:right;color:#065f46;font-weight:700;">${fmt(Math.max(0,duEsp-dejaEsp))}</td><td style="text-align:right;color:#1e40af;font-weight:700;">${fmt(Math.max(0,duCB-dejaCB))}</td><td style="text-align:right;color:#065f46;font-weight:700;">${fmt(resteRev)}</td></tr>
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th>Date</th><th>Mode</th><th style="text-align:right;">Montant</th></tr></thead>
+    <tbody>${revRows}</tbody>
+  </table>
+</div>
+<div class="ftr">
+  <span>Easy Caisse — ${dep.name}${dep.lieu?' — '+dep.lieu:''}</span>
+  <span>${periodLabel} · ${printDate}</span>
+</div>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if(w) {
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    setTimeout(()=>{ w.focus(); w.print(); }, 400);
+  }
 }
 
 // Init
