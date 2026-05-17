@@ -34,7 +34,7 @@
 
     .dep-form { background: #f9f9f7; border: 1px solid #e0dfd8; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
     .dep-form-title { font-size: 13px; font-weight: 600; margin-bottom: 0.75rem; color: #1a1a18; }
-    .dep-form-grid { display: grid; grid-template-columns: 1fr 1fr 80px; gap: 8px; margin-bottom: 10px; }
+    .dep-form-grid { display: grid; grid-template-columns: 1fr 1fr 80px 80px; gap: 8px; margin-bottom: 10px; }
     .dep-form input { height: 36px; border: 1px solid #d4d3cb; border-radius: 8px; background: #fff; color: #1a1a18; font-size: 13px; padding: 0 10px; width: 100%; }
     .dep-form input:focus { outline: none; border-color: #555; }
     .dep-form-label { font-size: 11px; color: #6b6b67; margin-bottom: 3px; }
@@ -723,6 +723,7 @@ function showDepForm(depId) {
         <div><div class="dep-form-label">Nom</div><input id="df-name" value="${dep?dep.name:''}" placeholder="Ex: Easy Cabine"/></div>
         <div><div class="dep-form-label">Lieu</div><input id="df-lieu" value="${dep?dep.lieu:''}" placeholder="Ex: Cap Fun"/></div>
         <div><div class="dep-form-label">% reversement</div><input id="df-pct" type="number" value="${dep?dep.pct:35}" min="0" max="100" placeholder="35"/></div>
+        <div><div class="dep-form-label">% frais CB</div><input id="df-frais-cb" type="number" value="${dep?dep.fraisCB||0:0}" min="0" max="100" step="0.01" placeholder="1.5"/></div>
       </div>
       <div class="dep-products">
         <div class="dep-products-title">Produits</div>
@@ -770,6 +771,7 @@ function saveDep() {
   const name = document.getElementById('df-name').value.trim();
   const lieu = document.getElementById('df-lieu').value.trim();
   const pct = parseFloat(document.getElementById('df-pct').value) || 0;
+  const fraisCB = parseFloat(document.getElementById('df-frais-cb').value) || 0;
   if (!name) return;
   const products = [];
   document.querySelectorAll('[id^="dp-name-"]').forEach(el => {
@@ -785,10 +787,10 @@ function saveDep() {
   if (!products.length) return;
   if (editingDepId) {
     const dep = getDep(editingDepId);
-    dep.name = name; dep.lieu = lieu; dep.pct = pct; dep.products = products;
+    dep.name = name; dep.lieu = lieu; dep.pct = pct; dep.fraisCB = fraisCB; dep.products = products;
     saveDeps(dep);
   } else {
-    const newDep = {id: uid(), name, lieu, pct, products};
+    const newDep = {id: uid(), name, lieu, pct, fraisCB, products};
     deps.push(newDep);
     saveDeps(newDep);
   }
@@ -943,7 +945,9 @@ function update() {
   const nbJetons = Math.max(0, parseInt(document.getElementById('nb-jetons')?.value)||0);
   const jetonVal = nbJetons * 2;
   const tropVerse = Math.max(0, parseFloat(document.getElementById('trop-verse')?.value)||0);
-  const baseRev = Math.max(0, total - jetonVal - tropVerse);
+  const totalCBnow = parseFloat(document.getElementById('d-cb')?.value)||0;
+  const fraisCBval = Math.round((totalCBnow * (dep.fraisCB||0) / 100) * 100) / 100;
+  const baseRev = Math.max(0, total - jetonVal - tropVerse - fraisCBval);
   const reverser = baseRev * (dep.pct/100);
   const jetonEl = document.getElementById('jeton-montant');
   if(jetonEl) jetonEl.textContent = '= ' + fmt(jetonVal) + ' déduits';
@@ -998,7 +1002,9 @@ function saveEntry() {
   const nbJetons = Math.max(0, parseInt(document.getElementById('nb-jetons')?.value)||0);
   const jetonVal = nbJetons * 2;
   const tropVerse = Math.max(0, parseFloat(document.getElementById('trop-verse')?.value)||0);
-  const baseRev = Math.max(0, total - jetonVal - tropVerse);
+  const totalCBnow = parseFloat(document.getElementById('d-cb')?.value)||0;
+  const fraisCBval = Math.round((totalCBnow * (dep.fraisCB||0) / 100) * 100) / 100;
+  const baseRev = Math.max(0, total - jetonVal - tropVerse - fraisCBval);
   const reverser = baseRev * (dep.pct/100);
   const newEntry = {id:uid(), depId:currentDepId, date:dateHeure, periode, qtys, totalCB, totalEsp, total, nbJetons, jetonVal, tropVerse, reverser, ts:Date.now()};
   allEntries.unshift(newEntry);
