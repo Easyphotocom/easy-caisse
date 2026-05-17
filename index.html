@@ -1517,6 +1517,8 @@ function printRecap(allData) {
     periodLabel = 'Du ' + d1 + ' au ' + d2;
   }
 
+  // Keep entries reference for print breakdown
+  const allFilteredEntries = entries;
   const totalEnc = entries.reduce((s,e)=>s+e.total,0);
   const totalCB  = entries.reduce((s,e)=>s+e.totalCB,0);
   const totalEsp = entries.reduce((s,e)=>s+e.totalEsp,0);
@@ -1533,8 +1535,14 @@ function printRecap(allData) {
     : '<tr><td colspan="99" style="text-align:center;color:#9b9b97;padding:12px;">Aucune saisie sur cette période.</td></tr>';
 
   const revRows = revs.length
-    ? revs.map(r=>'<tr><td>'+r.date+'</td><td class="td-rev">'+fmt(r.montant)+'</td></tr>').join('')
-    : '<tr><td colspan="2" style="text-align:center;color:#9b9b97;padding:12px;">Aucun reversement sur cette période.</td></tr>';
+    ? revs.map(r=>{
+        const isCB = r.mode==='cb';
+        const modeLabel = isCB ? '💳 CB' : '💵 Espèces';
+        const mention = isCB ? ' <em style="color:#1e40af;font-size:10px;">— Facture à produire</em>' : '';
+        const montantLabel = isCB ? fmt(r.montant)+' HT' : fmt(r.montant);
+        return '<tr><td>'+r.date+'</td><td>'+modeLabel+mention+'</td><td style="text-align:right;font-weight:600;color:'+(isCB?'#1e40af':'#065f46')+';">'+montantLabel+'</td></tr>';
+      }).join('')
+    : '<tr><td colspan="3" style="text-align:center;color:#9b9b97;padding:12px;">Aucun reversement sur cette période.</td></tr>';
 
   const now = new Date();
   const printDate = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
