@@ -585,7 +585,9 @@ function updateM(){
   });
   const nbJ=Math.max(0,parseInt(document.getElementById('m-jetons')?.value)||0);
   const jetonVal=nbJ*2;
-  const baseRev=Math.max(0,total-jetonVal-fraisCBm);
+  const totalCBnow=parseFloat(document.getElementById('m-cb')?.value)||0;
+  const fraisCBnow=Math.round((totalCBnow*(dep.fraisCB||0)/100)*100)/100;
+  const baseRev=Math.max(0,total-jetonVal-fraisCBnow);
   const reverser=baseRev*(dep.pct/100);
   document.getElementById('m-jeton-val').textContent='= '+fmt(jetonVal);
   document.getElementById('m-total').textContent=fmt(total);
