@@ -657,17 +657,21 @@ function renderEntryListM(dep){
   const el=document.getElementById('m-entry-list'); if(!el) return;
   if(!entries.length){el.innerHTML='<div class="empty-msg">Aucune saisie.</div>';return;}
   el.innerHTML=entries.slice(0,10).map(e=>{
-    const prodCols=dep.products.map((p,pi)=>{
+    const prodDetails=dep.products.map((p,pi)=>{
       const q=e.qtys[pi]; if(!q) return '';
-      return q.modeCA?fmt(q.ca||0):(q.qty||0)+'×';
-    }).filter(Boolean).join(' / ');
+      const val=q.modeCA?fmt(q.ca||0):(q.qty||0)+'×';
+      if(q.modeCA && !q.ca) return '';
+      if(!q.modeCA && !q.qty) return '';
+      return `<span style="background:#f4f4f0;border-radius:4px;padding:2px 6px;font-size:11px;">${p.name} <strong>${val}</strong></span>`;
+    }).filter(Boolean).join(' ');
     return `<div class="rev-row">
       <div style="flex:1;min-width:0;">
         <div style="font-size:11px;color:#9b9b97;">${e.date}</div>
-        <div style="font-size:12px;font-weight:600;color:#1e40af;">${e.periode||'—'}</div>
-        <div style="font-size:11px;color:#6b6b67;">${prodCols} — ${fmt(e.total)}</div>
+        <div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:4px;">${e.periode||'—'}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">${prodDetails}</div>
+        <div style="font-size:12px;color:#1a1a18;font-weight:600;">Total : ${fmt(e.total)}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:8px;">
         <span style="font-size:12px;color:#065f46;font-weight:600;">${fmt(e.reverser)}</span>
         <button class="btn-del-mobile" data-eid="${e.id}" onclick="deleteEntryM(this)">✕</button>
       </div>
