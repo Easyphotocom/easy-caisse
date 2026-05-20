@@ -631,9 +631,15 @@ function saveSaisie(){
   const au=getDate('m-dd2','m-mm2','m-yyyy2');
   const periode=du===au?du:`${du} → ${au}`;
   const jetonVal=nbJ*2;
-  const baseRev=Math.max(0,total-jetonVal-fraisCBm);
-  const reverser=baseRev*(dep.pct/100);
-  const entry={id:uid(),depId:currentDepId,date:dateHeure,periode,qtys,totalCB,totalEsp,total,nbJetons:nbJ,jetonVal,fraisCB:fraisCBm,reverser,ts:Date.now()};
+  const fraisCB=Math.round((totalCB*(dep.fraisCB||0)/100)*100)/100;
+  // Reversement espèces : (espèces - jetons) × %
+  const baseEsp=Math.max(0,totalEsp-jetonVal);
+  const reverserEsp=Math.round(baseEsp*(dep.pct/100)*100)/100;
+  // Reversement CB : (CB × % - frais CB) ÷ 1.20 pour avoir HT
+  const reverserCBttc=Math.max(0,totalCB*(dep.pct/100)-fraisCB);
+  const reverserCBht=Math.round((reverserCBttc/1.20)*100)/100;
+  const reverser=reverserEsp+reverserCBht;
+  const entry={id:uid(),depId:currentDepId,date:dateHeure,periode,qtys,totalCB,totalEsp,total,nbJetons:nbJ,jetonVal,fraisCB,reverserEsp,reverserCBht,reverser,ts:Date.now()};
   allEntries.unshift(entry);
   if(window.fbSave) window.fbSave('entries',entry.id,entry);
   // Reset
