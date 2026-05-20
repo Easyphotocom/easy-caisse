@@ -12,9 +12,9 @@
       --red: #d42b2b;
       --red-dark: #a01e1e;
       --red-light: #e85555;
-      --dark: #0e0e0c;
-      --dark2: #1a1a16;
-      --dark3: #252520;
+      --dark: #000000;
+      --dark2: #111110;
+      --dark3: #1a1a18;
       --cream: #f5f2eb;
       --text-muted: #7a7a6a;
     }
@@ -390,8 +390,12 @@
     setTimeout(() => { window.location.href = url; }, 400);
   }
 
+  let pendingTab = null;
+
   function openProtected(url, label) {
     pendingUrl = url;
+    // Ouvrir l'onglet ICI (au clic direct) pour éviter le bloqueur de popups
+    pendingTab = window.open('about:blank', '_blank');
     document.getElementById('modal-sub').textContent = label + ' — zone administrateur';
     document.getElementById('modal-input').value = '';
     document.getElementById('modal-input').classList.remove('error');
@@ -402,6 +406,8 @@
 
   function closeModal() {
     document.getElementById('modal').classList.remove('show');
+    // Annulation : fermer l'onglet vide ouvert
+    if (pendingTab) { try { pendingTab.close(); } catch(e){} pendingTab = null; }
     pendingUrl = '';
   }
 
@@ -409,8 +415,14 @@
     const val = document.getElementById('modal-input').value;
     if (val === ADMIN_PASSWORD) {
       closeModal();
-      showRedirect();
-      setTimeout(() => { window.location.href = pendingUrl; }, 400);
+      // Rediriger l'onglet déjà ouvert vers la bonne URL
+      if (pendingTab && !pendingTab.closed) {
+        pendingTab.location.href = pendingUrl;
+      } else {
+        window.open(pendingUrl, '_blank');
+      }
+      pendingTab = null;
+      pendingUrl = '';
     } else {
       const inp = document.getElementById('modal-input');
       inp.classList.add('error');
