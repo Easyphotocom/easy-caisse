@@ -390,12 +390,8 @@
     setTimeout(() => { window.location.href = url; }, 400);
   }
 
-  let pendingTab = null;
-
   function openProtected(url, label) {
     pendingUrl = url;
-    // Ouvrir l'onglet ICI (au clic direct) pour éviter le bloqueur de popups
-    pendingTab = window.open('about:blank', '_blank');
     document.getElementById('modal-sub').textContent = label + ' — zone administrateur';
     document.getElementById('modal-input').value = '';
     document.getElementById('modal-input').classList.remove('error');
@@ -406,8 +402,6 @@
 
   function closeModal() {
     document.getElementById('modal').classList.remove('show');
-    // Annulation : fermer l'onglet vide ouvert
-    if (pendingTab) { try { pendingTab.close(); } catch(e){} pendingTab = null; }
     pendingUrl = '';
   }
 
@@ -415,13 +409,14 @@
     const val = document.getElementById('modal-input').value;
     if (val === ADMIN_PASSWORD) {
       closeModal();
-      // Rediriger l'onglet déjà ouvert vers la bonne URL
-      if (pendingTab && !pendingTab.closed) {
-        pendingTab.location.href = pendingUrl;
-      } else {
-        window.open(pendingUrl, '_blank');
-      }
-      pendingTab = null;
+      // Technique fiable Chrome : lien <a> caché cliqué programmatiquement
+      const a = document.createElement('a');
+      a.href = pendingUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       pendingUrl = '';
     } else {
       const inp = document.getElementById('modal-input');
