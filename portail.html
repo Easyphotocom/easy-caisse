@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Espace Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8d48a;
+      --gold-dark: #8a6a1f;
+      --dark: #0e0e0c;
+      --dark2: #1a1a16;
+      --dark3: #252520;
+      --cream: #f5f2eb;
+      --text-muted: #7a7a6a;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--dark);
+      color: var(--cream);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Fond décoratif */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 50%, rgba(201,168,76,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 80% 30%, rgba(201,168,76,0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Grille fine en fond */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* ── Écran cadenas ── */
+    .lock-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      animation: fadeIn 0.8s ease both;
+    }
+
+    .brand {
+      text-align: center;
+    }
+    .brand-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--cream);
+    }
+    .brand-sub {
+      font-size: 12px;
+      font-weight: 300;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .lock-icon-wrap {
+      position: relative;
+      cursor: pointer;
+    }
+    .lock-icon-wrap:hover .lock-circle {
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.08);
+      transform: scale(1.05);
+    }
+    .lock-icon-wrap:hover .lock-svg { color: var(--gold); }
+    .lock-circle {
+      width: 100px;
+      height: 100px;
+      border: 1.5px solid rgba(201,168,76,0.35);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(201,168,76,0.04);
+      transition: all 0.3s ease;
+    }
+    .lock-svg {
+      font-size: 38px;
+      color: var(--gold);
+      transition: color 0.3s;
+      line-height: 1;
+    }
+    .lock-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    /* ── Portail (3 boutons) ── */
+    .portal-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 360px;
+      animation: slideUp 0.5s ease both;
+    }
+
+    .portal-header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .portal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--cream);
+    }
+    .portal-sep {
+      width: 40px;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 10px auto 0;
+    }
+
+    .portal-btn {
+      width: 100%;
+      padding: 18px 24px;
+      border-radius: 12px;
+      border: 1px solid rgba(201,168,76,0.2);
+      background: var(--dark2);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      text-align: left;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+    }
+    .portal-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(201,168,76,0.06), transparent);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .portal-btn:hover { border-color: rgba(201,168,76,0.5); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.35); }
+    .portal-btn:hover::before { opacity: 1; }
+    .portal-btn:active { transform: translateY(0); }
+
+    .portal-btn-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .icon-caisse { background: rgba(201,168,76,0.12); }
+    .icon-resa   { background: rgba(99,168,201,0.12); }
+    .icon-dep    { background: rgba(99,201,140,0.12); }
+
+    .portal-btn-text { flex: 1; }
+    .portal-btn-label { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .portal-btn-desc  { font-size: 11px; color: var(--text-muted); }
+    .portal-btn-arrow { color: var(--text-muted); font-size: 16px; transition: transform 0.2s; }
+    .portal-btn:hover .portal-btn-arrow { transform: translateX(4px); color: var(--gold); }
+
+    .portal-lock-badge {
+      font-size: 10px;
+      background: rgba(201,168,76,0.15);
+      color: var(--gold);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .back-link {
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+      background: none;
+      border: none;
+      font-family: inherit;
+      margin-top: 4px;
+    }
+    .back-link:hover { color: var(--cream); }
+
+    /* ── Modal mot de passe ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; animation: fadeIn 0.2s ease; }
+
+    .modal-card {
+      background: var(--dark2);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 16px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 320px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+      animation: slideUp 0.3s ease;
+    }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .modal-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .modal-input {
+      width: 100%;
+      height: 50px;
+      background: var(--dark3);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 10px;
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.15em;
+      padding: 0 12px;
+      transition: border-color 0.2s;
+    }
+    .modal-input:focus { outline: none; border-color: var(--gold); }
+    .modal-input.error { border-color: #dc2626; animation: shake 0.3s ease; }
+    .modal-error { color: #f87171; font-size: 12px; margin-top: 8px; min-height: 16px; text-align: center; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-cancel {
+      flex: 1; height: 46px; background: transparent;
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+      color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .modal-cancel:hover { border-color: rgba(255,255,255,0.25); color: var(--cream); }
+    .modal-confirm {
+      flex: 2; height: 46px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      border: none; border-radius: 10px;
+      color: #0e0e0c; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .modal-confirm:hover { opacity: 0.9; transform: translateY(-1px); }
+    .modal-confirm:active { transform: translateY(0); }
+
+    /* ── Animations ── */
+    @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
+    @keyframes shake   { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+    /* Responsive iframe */
+    @media (max-width: 400px) {
+      .modal-card { padding: 24px 18px; }
+      .portal-btn { padding: 14px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Écran cadenas -->
+<div class="lock-screen" id="lock-screen">
+  <div class="brand">
+    <div class="brand-title">Espace Pro</div>
+    <div class="brand-sub">Accès sécurisé</div>
+  </div>
+  <div class="lock-icon-wrap" onclick="openPortal()" title="Accéder au portail">
+    <div class="lock-circle">
+      <span class="lock-svg">🔒</span>
+    </div>
+  </div>
+  <div class="lock-hint">Cliquez pour accéder</div>
+</div>
+
+<!-- Portail 3 boutons -->
+<div class="portal-screen" id="portal-screen">
+  <div class="portal-header">
+    <div class="portal-title">Espace Pro</div>
+    <div class="portal-sep"></div>
+  </div>
+
+  <!-- Bouton Easy Caisse -->
+  <button class="portal-btn" onclick="openProtected('https://easy-caisse.vercel.app/', 'Easy Caisse')">
+    <div class="portal-btn-icon icon-caisse">💰</div>
+    <div class="portal-btn-text">
+      <div class="portal-btn-label">Easy Caisse <span class="portal-lock-badge">🔑 ADMIN</span></div>
+      <div class="portal-btn-desc">Gestion dépositaires & reversements</div>
+    </div>
+    <span class="portal-btn-arrow">›</span>
+  </button>
+
+  <!-- Bouton Réservation -->
+  <button class="portal-btn" onclick="openProtected('https://borne-selfie-sage.vercel.app/', 'Réservation')">
+    <div class="portal-btn-icon icon-resa">📅</div>
+    <div class="portal-btn-text">
+      <div class="portal-btn-label">Réservation <span class="portal-lock-badge">🔑 ADMIN</span></div>
+      <div class="portal-btn-desc">Gestion des réservations bornes</div>
+    </div>
+    <span class="portal-btn-arrow">›</span>
+  </button>
+
+  <!-- Bouton Espace Dépositaire -->
+  <button class="portal-btn" onclick="window.open('https://easy-caisse.vercel.app/depositaire.html','_blank')">
+    <div class="portal-btn-icon icon-dep">🏪</div>
+    <div class="portal-btn-text">
+      <div class="portal-btn-label">Espace Dépositaire</div>
+      <div class="portal-btn-desc">Saisie & suivi — accès par code PIN</div>
+    </div>
+    <span class="portal-btn-arrow">›</span>
+  </button>
+
+  <button class="back-link" onclick="closePortal()">← Retour</button>
+</div>
+
+<!-- Modal mot de passe admin -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-card">
+    <div class="modal-title">Accès restreint</div>
+    <div class="modal-sub" id="modal-sub">Zone réservée à l'administrateur</div>
+    <input class="modal-input" type="password" id="modal-input"
+           placeholder="••••" maxlength="20"
+           onkeydown="if(event.key==='Enter') confirmPassword()"/>
+    <div class="modal-error" id="modal-error"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Annuler</button>
+      <button class="modal-confirm" onclick="confirmPassword()">Accéder →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Config ───────────────────────────────────────────────────
+  const ADMIN_PASSWORD = '1018';
+  let pendingUrl = '';
+
+  // ── Portail ──────────────────────────────────────────────────
+  function openPortal() {
+    document.getElementById('lock-screen').style.display = 'none';
+    const ps = document.getElementById('portal-screen');
+    ps.style.display = 'flex';
+  }
+
+  function closePortal() {
+    document.getElementById('portal-screen').style.display = 'none';
+    document.getElementById('lock-screen').style.display = 'flex';
+  }
+
+  // ── Modal admin ──────────────────────────────────────────────
+  function openProtected(url, label) {
+    pendingUrl = url;
+    document.getElementById('modal-sub').textContent = label + ' — zone réservée à l\'administrateur';
+    document.getElementById('modal-input').value = '';
+    document.getElementById('modal-input').classList.remove('error');
+    document.getElementById('modal-error').textContent = '';
+    document.getElementById('modal').classList.add('show');
+    setTimeout(() => document.getElementById('modal-input').focus(), 100);
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('show');
+    pendingUrl = '';
+  }
+
+  function confirmPassword() {
+    const val = document.getElementById('modal-input').value;
+    if (val === ADMIN_PASSWORD) {
+      closeModal();
+      window.open(pendingUrl, '_blank');
+    } else {
+      const inp = document.getElementById('modal-input');
+      inp.classList.add('error');
+      document.getElementById('modal-error').textContent = 'Code incorrect. Réessayez.';
+      inp.value = '';
+      setTimeout(() => inp.classList.remove('error'), 400);
+    }
+  }
+
+  // Fermer le modal en cliquant en dehors
+  document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+</script>
+</body>
+</html>
