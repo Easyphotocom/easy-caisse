@@ -529,8 +529,23 @@ function selectDepM(id){
 // ── Products saisie ───────────────────────────────────────────────
 function renderProductsM(dep){
   const el=document.getElementById('m-products');
-  el.innerHTML=dep.products.map((p,i)=>`
-    <div class="product-block">
+  el.innerHTML=dep.products.map((p,i)=>{
+    if(p.isCaisse){
+      return `<div class="product-block" style="border-left:3px solid #f59e0b;">
+        <div class="product-block-name">
+          <span>${p.name}</span>
+          <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;">🪙 CAISSE</span>
+        </div>
+        <div class="qty-row-mobile" style="margin-top:8px;">
+          <span class="qty-label-mobile">Montant (€)</span>
+          <div class="qty-controls-mobile">
+            <input class="qty-input-mobile" type="number" id="m-caisse-${i}" placeholder="0,00" min="0" step="0.01" oninput="updateM()" style="font-size:18px;"/>
+          </div>
+        </div>
+        <div class="subtotal-mobile">Montant encaissé : <span id="m-sub-${i}">0,00 €</span></div>
+      </div>`;
+    }
+    return `<div class="product-block">
       <div class="product-block-name">
         <span>${p.name}</span>
         <span class="product-prix">${fmt(p.prix)}</span>
@@ -550,7 +565,8 @@ function renderProductsM(dep){
         <input class="qty-input-mobile" type="number" id="m-ca-${i}" placeholder="0,00" min="0" step="0.01" oninput="updateM()" style="width:100%;height:44px;"/>
       </div>
       <div class="subtotal-mobile">Sous-total : <span id="m-sub-${i}">0,00 €</span></div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function setModeM(i,mode){
@@ -570,6 +586,7 @@ function adjM(id,delta){
 }
 
 function getSubM(p,i){
+  if(p.isCaisse) return parseFloat(document.getElementById('m-caisse-'+i)?.value)||0;
   const modeCA=document.getElementById('m-mode-ca-'+i)?.classList.contains('active');
   if(modeCA) return parseFloat(document.getElementById('m-ca-'+i)?.value)||0;
   return (parseInt(document.getElementById('m-qty-'+i)?.value)||0)*p.prix;
@@ -612,6 +629,13 @@ function saveSaisie(){
   const dep=getDep(currentDepId); if(!dep) return;
   let total=0; const qtys=[]; let hasQty=false;
   dep.products.forEach((p,i)=>{
+    if(p.isCaisse){
+      const montantCaisse=parseFloat(document.getElementById('m-caisse-'+i)?.value)||0;
+      qtys.push({qty:null,ca:montantCaisse,modeCA:false,isCaisse:true});
+      total+=montantCaisse;
+      if(montantCaisse>0) hasQty=true;
+      return;
+    }
     const modeCA=document.getElementById('m-mode-ca-'+i)?.classList.contains('active');
     const qty=modeCA?null:(parseInt(document.getElementById('m-qty-'+i)?.value)||0);
     const ca=modeCA?(parseFloat(document.getElementById('m-ca-'+i)?.value)||0):null;
@@ -643,9 +667,10 @@ function saveSaisie(){
   allEntries.unshift(entry);
   if(window.fbSave) window.fbSave('entries',entry.id,entry);
   // Reset
-  dep.products.forEach((_,i)=>{
+  dep.products.forEach((p,i)=>{
     const q=document.getElementById('m-qty-'+i); if(q) q.value='';
     const c=document.getElementById('m-ca-'+i); if(c) c.value='';
+    const ca=document.getElementById('m-caisse-'+i); if(ca) ca.value='';
   });
   document.getElementById('m-jetons').value=0;
   document.getElementById('m-cb').value='';
@@ -665,7 +690,7 @@ function renderEntryListM(dep){
   el.innerHTML=entries.slice(0,10).map(e=>{
     const prodDetails=dep.products.map((p,pi)=>{
       const q=e.qtys[pi]; if(!q) return '';
-      const val=q.modeCA?fmt(q.ca||0):(q.qty||0)+'×';
+      const val=q.isCaisse?('🪙'+fmt(q.ca||0)):q.modeCA?fmt(q.ca||0):(q.qty||0)+'×';
       if(q.modeCA && !q.ca) return '';
       if(!q.modeCA && !q.qty) return '';
       return `<span style="background:#f4f4f0;border-radius:4px;padding:2px 6px;font-size:11px;">${p.name} <strong>${val}</strong></span>`;
