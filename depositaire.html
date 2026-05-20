@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Easy Caisse — Dépositaire</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f4f0; color: #1a1a18; min-height: 100vh; overflow-x: hidden; }
+
+    /* ── Écran PIN ── */
+    .pin-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .pin-logo { font-size: 22px; font-weight: 700; color: #1a1a18; margin-bottom: 6px; }
+    .pin-sub { font-size: 13px; color: #6b6b67; margin-bottom: 32px; }
+    .pin-card { background: #fff; border: 1px solid #e0dfd8; border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 340px; }
+    .pin-label { font-size: 13px; font-weight: 600; color: #1a1a18; margin-bottom: 10px; }
+    .pin-input { width: 100%; height: 52px; border: 1px solid #d4d3cb; border-radius: 10px; background: #f9f9f7; font-size: 18px; font-weight: 600; text-align: center; letter-spacing: 0.1em; padding: 0 12px; color: #1a1a18; }
+    .pin-input:focus { outline: none; border-color: #1a1a18; }
+    .pin-btn { width: 100%; height: 52px; background: #1a1a18; border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+    .pin-btn:active { background: #333; }
+    .pin-error { color: #dc2626; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px; display: none; }
+    .pin-loading { color: #6b6b67; font-size: 13px; text-align: center; margin-top: 10px; }
+
+    /* ── App ── */
+    .app-screen { display: none; padding-bottom: 80px; }
+    .top-bar { background: #1a1a18; color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .top-bar-title { font-size: 16px; font-weight: 600; }
+    .top-bar-dep { font-size: 12px; color: #9b9b97; margin-top: 2px; }
+    .top-bar-logout { font-size: 12px; color: #6b6b67; background: #2a2a28; padding: 5px 10px; border-radius: 8px; border: none; cursor: pointer; color: #fff; }
+
+    .screen { display: none; padding: 16px; }
+    .screen.active { display: block; }
+
+    .card { background: #fff; border: 1px solid #e0dfd8; border-radius: 12px; padding: 1rem; margin-bottom: 12px; }
+    .card-title { font-size: 13px; font-weight: 600; color: #1a1a18; margin-bottom: 12px; }
+    .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6b6b67; margin-bottom: 8px; }
+
+    /* Produits */
+    .product-block { background: #f9f9f7; border: 1px solid #e0dfd8; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    .product-block-name { font-size: 14px; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .product-prix { font-size: 12px; color: #6b6b67; }
+    .mode-toggle { display: flex; border: 1px solid #d4d3cb; border-radius: 6px; overflow: hidden; width: fit-content; margin-bottom: 10px; }
+    .mode-toggle button { padding: 5px 12px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; background: #f4f4f0; color: #6b6b67; }
+    .mode-toggle button.active { background: #1a1a18; color: #fff; }
+    .qty-row-mobile { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .qty-label-mobile { font-size: 12px; color: #6b6b67; width: 80px; flex-shrink: 0; }
+    .qty-controls-mobile { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .qty-btn-mobile { width: 44px; min-width: 44px; height: 44px; border: 1px solid #d4d3cb; border-radius: 8px; background: #f4f4f0; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 300; }
+    .qty-btn-mobile:active { background: #e0dfd8; }
+    .qty-input-mobile { flex: 1; text-align: center; font-size: 18px; font-weight: 600; border: 1px solid #d4d3cb; border-radius: 8px; height: 44px; background: #fff; color: #1a1a18; min-width: 0; }
+    .subtotal-mobile { font-size: 12px; color: #6b6b67; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e8e8e4; }
+    .subtotal-mobile span { font-weight: 600; color: #1a1a18; }
+
+    /* Jetons */
+    .jeton-block { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    .jeton-block-title { font-size: 13px; font-weight: 600; color: #92400e; margin-bottom: 8px; }
+
+    /* Totaux */
+    .totaux-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .total-bloc { background: #f4f4f0; border-radius: 8px; padding: 10px 12px; }
+    .total-bloc-label { font-size: 11px; color: #6b6b67; margin-bottom: 3px; }
+    .total-bloc-value { font-size: 18px; font-weight: 600; color: #1a1a18; }
+    .total-bloc-value.green { color: #065f46; }
+
+    /* Dispatch */
+    .dispatch-block { background: #f4f4f0; border: 1px solid #e0dfd8; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .dispatch-block-title { font-size: 12px; font-weight: 600; color: #6b6b67; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+    .dispatch-field-mobile { margin-bottom: 8px; }
+    .dispatch-field-mobile label { font-size: 12px; color: #6b6b67; display: block; margin-bottom: 4px; }
+    .dispatch-input-mobile { width: 100%; height: 44px; border: 1px solid #d4d3cb; border-radius: 8px; background: #fff; font-size: 16px; font-weight: 600; padding: 0 12px; }
+    .dispatch-check { font-size: 12px; font-weight: 600; margin-top: 6px; }
+    .dispatch-check.ok { color: #065f46; }
+    .dispatch-check.ko { color: #dc2626; }
+
+    /* Date */
+    .date-row-mobile { display: flex; gap: 8px; align-items: center; }
+    .date-sel-mobile { height: 44px; border: 1px solid #d4d3cb; border-radius: 8px; background: #f9f9f7; font-size: 14px; padding: 0 6px; flex: 1; }
+
+    /* Historique */
+    .entry-row { padding: 12px 0; border-bottom: 1px solid #e8e8e4; }
+    .entry-row:last-child { border-bottom: none; }
+    .entry-date { font-size: 11px; color: #9b9b97; }
+    .entry-periode { font-size: 12px; font-weight: 600; color: #1e40af; margin: 2px 0 4px; }
+    .entry-details { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+    .entry-tag { background: #f4f4f0; border-radius: 4px; padding: 2px 6px; font-size: 11px; }
+    .entry-footer { display: flex; justify-content: space-between; align-items: center; }
+    .entry-total { font-size: 13px; font-weight: 600; }
+    .entry-rev { font-size: 13px; font-weight: 600; color: #065f46; }
+    .btn-del-entry { background: #fee2e2; border: none; border-radius: 6px; color: #dc2626; font-size: 11px; font-weight: 600; padding: 4px 10px; cursor: pointer; }
+    .btn-del-disabled { background: #f4f4f0; border: none; border-radius: 6px; color: #9b9b97; font-size: 11px; padding: 4px 10px; cursor: not-allowed; }
+    .empty-msg { text-align: center; padding: 20px; font-size: 13px; color: #9b9b97; }
+
+    /* Buttons */
+    .btn-primary { width: 100%; padding: 15px; background: #1a1a18; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; color: #fff; cursor: pointer; margin-top: 4px; }
+    .btn-primary:active { background: #333; transform: scale(0.99); }
+
+    /* Toast */
+    .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #065f46; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 999; display: none; white-space: nowrap; }
+    .toast.show { display: block; }
+
+    /* Bottom nav */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a18; display: flex; z-index: 100; }
+    .nav-btn { flex: 1; padding: 14px 8px; font-size: 11px; font-weight: 600; color: #6b6b67; background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .nav-btn.active { color: #fff; }
+    .nav-btn-icon { font-size: 20px; }
+
+    select, input { outline: none; }
+  </style>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, addDoc, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDfeONpVS1_RXLSVT-ai-ptMY3fSPwa7wc",
+      authDomain: "easy-caisse-38bad.firebaseapp.com",
+      projectId: "easy-caisse-38bad",
+      storageBucket: "easy-caisse-38bad.firebasestorage.app",
+      messagingSenderId: "349805750948",
+      appId: "1:349805750948:web:fe47e9f678564acfacd431"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.fbSave = async (col, id, data) => await setDoc(doc(db, col, id), data);
+    window.fbDelete = async (col, id) => await deleteDoc(doc(db, col, id));
+
+    onSnapshot(collection(db, 'deps'), snap => {
+      window._deps = snap.docs.map(d => ({...d.data(), id: d.id}));
+      if(window.onFbUpdate) window.onFbUpdate('deps');
+    });
+    onSnapshot(collection(db, 'entries'), snap => {
+      window._entries = snap.docs.map(d => ({...d.data(), id: d.id})).sort((a,b)=>b.ts-a.ts);
+      if(window.onFbUpdate) window.onFbUpdate('entries');
+    });
+    onSnapshot(collection(db, 'revs'), snap => {
+      window._revs = snap.docs.map(d => ({...d.data(), id: d.id}));
+      if(window.onFbUpdate) window.onFbUpdate('revs');
+    });
+
+    window.fbLoaded = true;
+  </script>
+</head>
+<body>
+
+<!-- Écran PIN -->
+<div class="pin-screen" id="pin-screen">
+  <div class="pin-logo">🏪 Easy Caisse</div>
+  <div class="pin-sub">Espace dépositaire</div>
+  <div class="pin-card">
+    <div class="pin-label">Entrez votre code d'accès</div>
+    <input class="pin-input" type="text" id="pin-input" placeholder="••••••••" autocomplete="off" onkeydown="if(event.key==='Enter') checkPin()"/>
+    <button class="pin-btn" onclick="checkPin()">Accéder →</button>
+    <div class="pin-error" id="pin-error">Code incorrect. Vérifiez avec votre gestionnaire.</div>
+    <div class="pin-loading" id="pin-loading">Chargement en cours...</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- App (après connexion) -->
+<div class="app-screen" id="app-screen">
+  <div class="top-bar">
+    <div>
+      <div class="top-bar-title">Easy Caisse</div>
+      <div class="top-bar-dep" id="top-dep-name">—</div>
+    </div>
+    <button class="top-bar-logout" onclick="logout()">Déconnexion</button>
+  </div>
+
+  <!-- Écran saisie -->
+  <div class="screen active" id="screen-saisie">
+    <div class="card">
+      <p class="card-title">Période de la saisie</p>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:12px;color:#6b6b67;width:25px;flex-shrink:0;">Du</span>
+        <div class="date-row-mobile" style="flex:1;">
+          <select class="date-sel-mobile" id="d-dd1"></select>
+          <span style="color:#9b9b97;">/</span>
+          <select class="date-sel-mobile" id="d-mm1"></select>
+          <span style="color:#9b9b97;">/</span>
+          <select class="date-sel-mobile" id="d-yyyy1"></select>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:#6b6b67;width:25px;flex-shrink:0;">Au</span>
+        <div class="date-row-mobile" style="flex:1;">
+          <select class="date-sel-mobile" id="d-dd2"></select>
+          <span style="color:#9b9b97;">/</span>
+          <select class="date-sel-mobile" id="d-mm2"></select>
+          <span style="color:#9b9b97;">/</span>
+          <select class="date-sel-mobile" id="d-yyyy2"></select>
+        </div>
+      </div>
+    </div>
+
+    <div id="d-products"></div>
+
+    <div class="jeton-block">
+      <div class="jeton-block-title">🎟 Jetons utilisés (2 € / jeton)</div>
+      <div class="qty-row-mobile">
+        <div class="qty-controls-mobile">
+          <button class="qty-btn-mobile" onclick="adjD('d-jetons',-1)">−</button>
+          <input class="qty-input-mobile" type="number" id="d-jetons" value="0" min="0" oninput="updateD()"/>
+          <button class="qty-btn-mobile" onclick="adjD('d-jetons',1)">+</button>
+        </div>
+        <span id="d-jeton-val" style="font-size:12px;color:#b45309;font-weight:600;white-space:nowrap;margin-left:8px;">= 0,00 €</span>
+      </div>
+    </div>
+
+    <div class="totaux-grid">
+      <div class="total-bloc"><div class="total-bloc-label">Total encaissé</div><div class="total-bloc-value" id="d-total">0,00 €</div></div>
+      <div class="total-bloc"><div class="total-bloc-label" id="d-rev-label">À reverser</div><div class="total-bloc-value green" id="d-reverser">0,00 €</div></div>
+    </div>
+
+    <div class="dispatch-block">
+      <div class="dispatch-block-title">Répartition</div>
+      <div class="dispatch-field-mobile">
+        <label>Dont CB (€)</label>
+        <input class="dispatch-input-mobile" type="number" id="d-cb" placeholder="0,00" min="0" step="0.01" oninput="updateDispatchD()"/>
+      </div>
+      <div class="dispatch-field-mobile">
+        <label>Dont espèces (€)</label>
+        <input class="dispatch-input-mobile" type="number" id="d-esp" placeholder="0,00" min="0" step="0.01" oninput="updateDispatchD()"/>
+      </div>
+      <div class="dispatch-check" id="d-dispatch-check"></div>
+    </div>
+
+    <button class="btn-primary" onclick="saveSaisieD()">✓ Enregistrer la saisie</button>
+  </div>
+
+  <!-- Écran historique -->
+  <div class="screen" id="screen-hist">
+    <div class="card">
+      <p class="card-title">Mes saisies</p>
+      <div id="d-entry-list"><div class="empty-msg">Aucune saisie.</div></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nav-saisie" onclick="goScreen('saisie')">
+      <span class="nav-btn-icon">📝</span>
+      <span>Saisie</span>
+    </button>
+    <button class="nav-btn" id="nav-hist" onclick="goScreen('hist')">
+      <span class="nav-btn-icon">📋</span>
+      <span>Historique</span>
+    </button>
+  </div>
+</div>
+
+<script>
+let deps=[], allEntries=[], allRevs=[];
+let currentDep = null;
+
+window.onFbUpdate = function(type) {
+  if(type==='deps') { deps=window._deps||[]; }
+  if(type==='entries') { allEntries=window._entries||[]; if(currentDep) renderHistD(); }
+  if(type==='revs') { allRevs=window._revs||[]; if(currentDep) renderHistD(); }
+  // Once deps loaded, hide loading
+  if(type==='deps') {
+    document.getElementById('pin-loading').style.display='none';
+  }
+};
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function fmt(v){ return Number(v).toFixed(2).replace('.',',')+' €'; }
+function getEntries(depId){ return allEntries.filter(e=>e.depId===depId); }
+function getRevs(depId){ return allRevs.filter(r=>r.depId===depId); }
+
+// ── PIN ───────────────────────────────────────────────────────────
+function checkPin() {
+  const pin = document.getElementById('pin-input').value.trim();
+  if(!pin) return;
+  const dep = deps.find(d => d.pin && d.pin === pin);
+  if(!dep) {
+    document.getElementById('pin-error').style.display='block';
+    document.getElementById('pin-input').value='';
+    return;
+  }
+  // Connexion OK
+  document.getElementById('pin-error').style.display='none';
+  currentDep = dep;
+  document.getElementById('pin-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  document.getElementById('top-dep-name').textContent = dep.name + (dep.lieu?' — '+dep.lieu:'');
+  document.getElementById('d-rev-label').textContent = `À reverser (${dep.pct}%)`;
+  buildSel('d-dd1','d-mm1','d-yyyy1');
+  buildSel('d-dd2','d-mm2','d-yyyy2');
+  renderProductsD(dep);
+  renderHistD();
+}
+
+function logout() {
+  currentDep = null;
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('pin-screen').style.display='flex';
+  document.getElementById('pin-input').value='';
+}
+
+// ── Navigation ────────────────────────────────────────────────────
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── Date selects ──────────────────────────────────────────────────
+function buildSel(dId,mId,yId){
+  const now=new Date();
+  const dS=document.getElementById(dId),mS=document.getElementById(mId),yS=document.getElementById(yId);
+  if(!dS||!mS||!yS) return;
+  dS.innerHTML=''; mS.innerHTML=''; yS.innerHTML='';
+  for(let d=1;d<=31;d++){const o=document.createElement('option');const v=String(d).padStart(2,'0');o.value=v;o.textContent=v;dS.appendChild(o);}
+  for(let m=1;m<=12;m++){const o=document.createElement('option');const v=String(m).padStart(2,'0');o.value=v;o.textContent=v;mS.appendChild(o);}
+  const yr=now.getFullYear();
+  for(let y=yr-1;y<=yr+1;y++){const o=document.createElement('option');o.value=y;o.textContent=y;yS.appendChild(o);}
+  dS.value=String(now.getDate()).padStart(2,'0');
+  mS.value=String(now.getMonth()+1).padStart(2,'0');
+  yS.value=yr;
+}
+function getDate(d,m,y){ return `${document.getElementById(d).value}/${document.getElementById(m).value}/${document.getElementById(y).value}`; }
+
+// ── Produits ──────────────────────────────────────────────────────
+function renderProductsD(dep){
+  const el=document.getElementById('d-products');
+  el.innerHTML=dep.products.map((p,i)=>{
+    if(p.isCaisse){
+      return `<div class="product-block" style="border-left:3px solid #f59e0b;">
+        <div class="product-block-name">
+          <span>${p.name}</span>
+          <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;">🪙 CAISSE</span>
+        </div>
+        <div class="qty-row-mobile" style="margin-top:8px;">
+          <span class="qty-label-mobile">Montant (€)</span>
+          <div class="qty-controls-mobile">
+            <input class="qty-input-mobile" type="number" id="d-caisse-${i}" placeholder="0,00" min="0" step="0.01" oninput="updateD()" style="font-size:18px;"/>
+          </div>
+        </div>
+        <div class="subtotal-mobile">Montant encaissé : <span id="d-sub-${i}">0,00 €</span></div>
+      </div>`;
+    }
+    return `<div class="product-block">
+      <div class="product-block-name">
+        <span>${p.name}</span>
+        <span class="product-prix">${fmt(p.prix)}</span>
+      </div>
+      <div class="mode-toggle">
+        <button id="d-mode-qty-${i}" class="active" onclick="setModeD(${i},'qty')">Quantité</button>
+        <button id="d-mode-ca-${i}" onclick="setModeD(${i},'ca')">CA (€)</button>
+      </div>
+      <div id="d-row-qty-${i}" class="qty-row-mobile">
+        <div class="qty-controls-mobile">
+          <button class="qty-btn-mobile" onclick="adjD('d-qty-${i}',-1)">−</button>
+          <input class="qty-input-mobile" type="number" id="d-qty-${i}" placeholder="—" min="0" oninput="updateD()"/>
+          <button class="qty-btn-mobile" onclick="adjD('d-qty-${i}',1)">+</button>
+        </div>
+      </div>
+      <div id="d-row-ca-${i}" style="display:none;width:100%;">
+        <input class="qty-input-mobile" type="number" id="d-ca-${i}" placeholder="0,00" min="0" step="0.01" oninput="updateD()" style="width:100%;height:44px;"/>
+      </div>
+      <div class="subtotal-mobile">Sous-total : <span id="d-sub-${i}">0,00 €</span></div>
+    </div>`;
+  }).join('');
+}
+
+function setModeD(i,mode){
+  document.getElementById('d-mode-qty-'+i).className=mode==='qty'?'active':'';
+  document.getElementById('d-mode-ca-'+i).className=mode==='ca'?'active':'';
+  document.getElementById('d-row-qty-'+i).style.display=mode==='qty'?'flex':'none';
+  document.getElementById('d-row-ca-'+i).style.display=mode==='ca'?'flex':'none';
+  if(mode==='qty'){const e=document.getElementById('d-ca-'+i);if(e)e.value='';}
+  else{const e=document.getElementById('d-qty-'+i);if(e)e.value='';}
+  updateD();
+}
+
+function adjD(id,delta){
+  const el=document.getElementById(id); if(!el) return;
+  el.value=Math.max(0,(el.value===''?0:parseInt(el.value)||0)+delta);
+  updateD();
+}
+
+function getSubD(p,i){
+  if(p.isCaisse) return parseFloat(document.getElementById('d-caisse-'+i)?.value)||0;
+  const modeCA=document.getElementById('d-mode-ca-'+i)?.classList.contains('active');
+  if(modeCA) return parseFloat(document.getElementById('d-ca-'+i)?.value)||0;
+  return (parseInt(document.getElementById('d-qty-'+i)?.value)||0)*p.prix;
+}
+
+function updateD(){
+  const dep=currentDep; if(!dep) return;
+  let total=0;
+  dep.products.forEach((p,i)=>{
+    const sub=getSubD(p,i);
+    const el=document.getElementById('d-sub-'+i); if(el) el.textContent=fmt(sub);
+    total+=sub;
+  });
+  const nbJ=Math.max(0,parseInt(document.getElementById('d-jetons')?.value)||0);
+  const jetonVal=nbJ*2;
+  const totalCB=parseFloat(document.getElementById('d-cb')?.value)||0;
+  const fraisCB=Math.round((totalCB*(dep.fraisCB||0)/100)*100)/100;
+  const totalEsp=parseFloat(document.getElementById('d-esp')?.value)||0;
+  const baseEsp=Math.max(0,totalEsp-jetonVal);
+  const revEsp=Math.round(baseEsp*(dep.pct/100)*100)/100;
+  const revCBttc=Math.max(0,totalCB*(dep.pct/100)-fraisCB);
+  const revCBht=Math.round((revCBttc/1.20)*100)/100;
+  document.getElementById('d-jeton-val').textContent='= '+fmt(jetonVal);
+  document.getElementById('d-total').textContent=fmt(total);
+  document.getElementById('d-reverser').textContent=fmt(revEsp+revCBht);
+  updateDispatchD();
+}
+
+function updateDispatchD(){
+  const totalStr=document.getElementById('d-total')?.textContent?.replace(',','.').replace(' €','');
+  const total=parseFloat(totalStr)||0;
+  const cb=parseFloat(document.getElementById('d-cb')?.value)||0;
+  const esp=parseFloat(document.getElementById('d-esp')?.value)||0;
+  const diff=Math.round((cb+esp-total)*100)/100;
+  const el=document.getElementById('d-dispatch-check'); if(!el) return;
+  if(cb===0&&esp===0){el.textContent='';return;}
+  if(diff===0){el.className='dispatch-check ok';el.textContent='✓ CB + Espèces = Total';}
+  else if(diff>0){el.className='dispatch-check ko';el.textContent='⚠ Excès de '+fmt(diff);}
+  else{el.className='dispatch-check ko';el.textContent='⚠ Manque '+fmt(Math.abs(diff));}
+}
+
+// ── Enregistrer saisie ────────────────────────────────────────────
+function saveSaisieD(){
+  const dep=currentDep; if(!dep) return;
+  let total=0; const qtys=[]; let hasQty=false;
+  dep.products.forEach((p,i)=>{
+    if(p.isCaisse){
+      const montant=parseFloat(document.getElementById('d-caisse-'+i)?.value)||0;
+      qtys.push({qty:null,ca:montant,modeCA:false,isCaisse:true});
+      total+=montant;
+      if(montant>0) hasQty=true;
+      return;
+    }
+    const modeCA=document.getElementById('d-mode-ca-'+i)?.classList.contains('active');
+    const qty=modeCA?null:(parseInt(document.getElementById('d-qty-'+i)?.value)||0);
+    const ca=modeCA?(parseFloat(document.getElementById('d-ca-'+i)?.value)||0):null;
+    const sub=modeCA?ca:qty*p.prix;
+    qtys.push({qty,ca,modeCA});
+    total+=sub;
+    if(sub>0) hasQty=true;
+  });
+  const nbJ=Math.max(0,parseInt(document.getElementById('d-jetons')?.value)||0);
+  if(!hasQty&&nbJ===0) return;
+  const totalCB=parseFloat(document.getElementById('d-cb')?.value)||0;
+  const totalEsp=parseFloat(document.getElementById('d-esp')?.value)||0;
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const dateHeure=`${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const du=getDate('d-dd1','d-mm1','d-yyyy1');
+  const au=getDate('d-dd2','d-mm2','d-yyyy2');
+  const periode=du===au?du:`${du} → ${au}`;
+  const jetonVal=nbJ*2;
+  const fraisCB=Math.round((totalCB*(dep.fraisCB||0)/100)*100)/100;
+  const baseEsp=Math.max(0,totalEsp-jetonVal);
+  const reverserEsp=Math.round(baseEsp*(dep.pct/100)*100)/100;
+  const reverserCBttc=Math.max(0,totalCB*(dep.pct/100)-fraisCB);
+  const reverserCBht=Math.round((reverserCBttc/1.20)*100)/100;
+  const reverser=reverserEsp+reverserCBht;
+  const entry={id:uid(),depId:dep.id,date:dateHeure,periode,qtys,totalCB,totalEsp,total,nbJetons:nbJ,jetonVal,fraisCB,reverserEsp,reverserCBht,reverser,ts:Date.now()};
+  if(window.fbSave) window.fbSave('entries',entry.id,entry);
+  // Reset
+  dep.products.forEach((p,i)=>{
+    const q=document.getElementById('d-qty-'+i); if(q) q.value='';
+    const c=document.getElementById('d-ca-'+i); if(c) c.value='';
+    const ca=document.getElementById('d-caisse-'+i); if(ca) ca.value='';
+  });
+  document.getElementById('d-jetons').value=0;
+  document.getElementById('d-cb').value='';
+  document.getElementById('d-esp').value='';
+  document.getElementById('d-dispatch-check').textContent='';
+  updateD();
+  showToast('✓ Saisie enregistrée !');
+  goScreen('hist');
+}
+
+// ── Historique ────────────────────────────────────────────────────
+function renderHistD(){
+  const dep=currentDep; if(!dep) return;
+  const entries=getEntries(dep.id);
+  const revs=getRevs(dep.id);
+  const totalVerse=revs.reduce((s,r)=>s+r.montant,0);
+  const el=document.getElementById('d-entry-list');
+  if(!entries.length){el.innerHTML='<div class="empty-msg">Aucune saisie pour le moment.</div>';return;}
+
+  el.innerHTML=entries.map(e=>{
+    const prodDetails=dep.products.map((p,pi)=>{
+      const q=e.qtys[pi]; if(!q) return '';
+      const val=q.isCaisse?('🪙 '+fmt(q.ca||0)):q.modeCA?fmt(q.ca||0):(q.qty||0)+'×';
+      if(q.isCaisse && !q.ca) return '';
+      if(q.modeCA && !q.ca) return '';
+      if(!q.modeCA && !q.isCaisse && !q.qty) return '';
+      return `<span class="entry-tag">${p.name} <strong>${val}</strong></span>`;
+    }).filter(Boolean).join('');
+
+    // Peut-il supprimer ? Seulement si aucun reversement n'a été fait
+    const canDelete = totalVerse === 0;
+    const delBtn = canDelete
+      ? `<button class="btn-del-entry" data-eid="${e.id}" onclick="deleteEntryD(this)">Supprimer</button>`
+      : `<span class="btn-del-disabled" title="Impossible : un reversement a déjà été effectué">🔒</span>`;
+
+    return `<div class="entry-row">
+      <div class="entry-date">${e.date}</div>
+      <div class="entry-periode">${e.periode||'—'}</div>
+      <div class="entry-details">${prodDetails}</div>
+      <div class="entry-footer">
+        <span class="entry-total">Total : ${fmt(e.total)}</span>
+        <span class="entry-rev">${fmt(e.reverser)}</span>
+        ${delBtn}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteEntryD(btn){
+  const id=btn.getAttribute('data-eid');
+  if(!confirm('Supprimer cette saisie ?')) return;
+  if(window.fbDelete) window.fbDelete('entries',id);
+  showToast('Saisie supprimée');
+}
+
+// Init : attendre Firebase
+setTimeout(()=>{
+  if(!window._deps || window._deps.length === 0){
+    document.getElementById('pin-loading').style.display='none';
+  }
+}, 3000);
+</script>
+</body>
+</html>

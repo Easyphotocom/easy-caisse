@@ -757,6 +757,10 @@ function showDepForm(depId) {
         <div><div class="dep-form-label">% reversement</div><input id="df-pct" type="number" value="${dep?dep.pct:35}" min="0" max="100" placeholder="35"/></div>
         <div><div class="dep-form-label">% frais CB</div><input id="df-frais-cb" type="number" value="${dep?dep.fraisCB||0:0}" min="0" max="100" step="0.01" placeholder="1.5"/></div>
       </div>
+      <div style="margin-bottom:10px;">
+        <div class="dep-form-label" style="margin-bottom:3px;">🔑 Code PIN dépositaire <span style="font-size:10px;color:#9b9b97;">(accès depuis depositaire.html — laisser vide pour désactiver)</span></div>
+        <input id="df-pin" value="${dep?dep.pin||'':''}" placeholder="Ex: capfun2025" style="height:36px;border:1px solid #d4d3cb;border-radius:8px;background:#fff;color:#1a1a18;font-size:13px;padding:0 10px;width:100%;max-width:260px;"/>
+      </div>
       <div class="dep-products">
         <div class="dep-products-title">Produits</div>
         <div style="display:grid;grid-template-columns:1fr 80px 50px 70px auto;gap:5px;margin-bottom:4px;">
@@ -807,6 +811,7 @@ function saveDep() {
   const lieu = document.getElementById('df-lieu').value.trim();
   const pct = parseFloat(document.getElementById('df-pct').value) || 0;
   const fraisCB = parseFloat(document.getElementById('df-frais-cb').value) || 0;
+  const pin = document.getElementById('df-pin')?.value.trim() || '';
   if (!name) return;
   const products = [];
   document.querySelectorAll('[id^="dp-name-"]').forEach(el => {
@@ -824,10 +829,10 @@ function saveDep() {
   if (!products.length) return;
   if (editingDepId) {
     const dep = getDep(editingDepId);
-    dep.name = name; dep.lieu = lieu; dep.pct = pct; dep.fraisCB = fraisCB; dep.products = products;
+    dep.name = name; dep.lieu = lieu; dep.pct = pct; dep.fraisCB = fraisCB; dep.pin = pin; dep.products = products;
     saveDeps(dep);
   } else {
-    const newDep = {id: uid(), name, lieu, pct, fraisCB, products};
+    const newDep = {id: uid(), name, lieu, pct, fraisCB, pin, products};
     deps.push(newDep);
     saveDeps(newDep);
   }
@@ -866,6 +871,7 @@ function renderDepList() {
       <div class="dep-info">
         <div class="dep-name">${d.name}${d.lieu?' — '+d.lieu:''}</div>
         <div class="dep-meta">${d.pct}% de reversement · ${d.products.length} produit${d.products.length>1?'s':''} : ${d.products.map(p=>p.name+' ('+fmt(p.prix)+')').join(', ')}</div>
+        <div style="margin-top:4px;font-size:11px;">${d.pin ? '🔑 PIN : <strong>'+d.pin+'</strong> — <a href="depositaire.html" target="_blank" style="color:#1e40af;">Lien dépositaire ↗</a>' : '<span style="color:#9b9b97;">Pas de PIN — accès dépositaire désactivé</span>'}</div>
       </div>
       <div class="dep-actions">
         <button class="btn-sm" data-did="${d.id}" onclick="showDepForm(this.getAttribute('data-did'))">Modifier</button>
