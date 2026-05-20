@@ -288,50 +288,6 @@
     }
     .redirect-msg { font-size:13px; color:var(--text-muted); }
 
-    /* ── Iframe screen ── */
-    .iframe-screen {
-      display: none;
-      position: fixed;
-      inset: 0;
-      flex-direction: column;
-      background: #000;
-      z-index: 500;
-    }
-    .iframe-screen.show { display: flex; }
-    .iframe-topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #111;
-      border-bottom: 1px solid rgba(212,43,43,0.2);
-      padding: 10px 16px;
-      flex-shrink: 0;
-    }
-    .iframe-back {
-      background: rgba(212,43,43,0.15);
-      border: 1px solid rgba(212,43,43,0.3);
-      border-radius: 8px;
-      color: #f5f2eb;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 6px 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .iframe-back:hover { background: rgba(212,43,43,0.3); }
-    .iframe-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #f5f2eb;
-      letter-spacing: 0.04em;
-    }
-    #main-iframe {
-      flex: 1;
-      width: 100%;
-      border: none;
-    }
-
     @keyframes fadeIn  { from { opacity:0 } to { opacity:1 } }
     @keyframes slideUp { from { opacity:0;transform:translateY(20px) } to { opacity:1;transform:translateY(0) } }
     @keyframes shake   { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
@@ -392,16 +348,6 @@
   <button class="back-link" onclick="closePortal()">← Retour</button>
 </div>
 
-<!-- Écran iframe -->
-<div class="iframe-screen" id="iframe-screen">
-  <div class="iframe-topbar">
-    <button class="iframe-back" onclick="closeIframe()">← Retour</button>
-    <span class="iframe-title" id="iframe-title"></span>
-    <span></span>
-  </div>
-  <iframe id="main-iframe" src="" frameborder="0" allowfullscreen></iframe>
-</div>
-
 <!-- Modal mot de passe -->
 <div class="modal-overlay" id="modal">
   <div class="modal-card">
@@ -435,7 +381,7 @@
   }
 
   function goDirectly(url) {
-    openIframe(url, 'Espace Dépositaire');
+    window.location.href = url;
   }
 
   function openProtected(url, label) {
@@ -457,7 +403,7 @@
     const val = document.getElementById('modal-input').value;
     if (val === ADMIN_PASSWORD) {
       closeModal();
-      openIframe(pendingUrl, document.getElementById('modal-sub').textContent.split(' —')[0]);
+      window.location.href = pendingUrl;
       pendingUrl = '';
     } else {
       const inp = document.getElementById('modal-input');
@@ -466,17 +412,6 @@
       inp.value = '';
       setTimeout(() => inp.classList.remove('error'), 400);
     }
-  }
-
-  function openIframe(url, title) {
-    document.getElementById('main-iframe').src = url;
-    document.getElementById('iframe-title').textContent = title;
-    document.getElementById('iframe-screen').classList.add('show');
-  }
-
-  function closeIframe() {
-    document.getElementById('iframe-screen').classList.remove('show');
-    document.getElementById('main-iframe').src = '';
   }
 
   document.getElementById('modal').addEventListener('click', function(e) {
