@@ -770,17 +770,18 @@ function showDepForm(depId) {
       </div>
       <div class="dep-products">
         <div class="dep-products-title">Produits <span style="font-size:10px;color:#9b9b97;font-weight:400;">(▲▼ pour réordonner)</span></div>
-        <div style="display:grid;grid-template-columns:32px 1fr 80px 50px 70px auto;gap:5px;margin-bottom:4px;">
+        <div style="display:grid;grid-template-columns:32px 1fr 80px 50px 70px 65px auto;gap:5px;margin-bottom:4px;">
           <span></span>
           <span style="font-size:10px;color:#6b6b67;font-weight:600;">Nom</span>
           <span style="font-size:10px;color:#6b6b67;font-weight:600;">Prix €</span>
           <span style="font-size:10px;color:#6b6b67;font-weight:600;text-align:center;">Print ?</span>
           <span style="font-size:10px;color:#6b6b67;font-weight:600;text-align:center;">Caisse ?</span>
+          <span style="font-size:10px;color:#6b6b67;font-weight:600;text-align:center;">Affiché ?</span>
           <span></span>
         </div>
         <div id="df-products">
           ${products.map((p,i)=>`
-            <div class="dep-product-row" id="dp-row-${i}" style="grid-template-columns:32px 1fr 80px 50px 70px auto;">
+            <div class="dep-product-row" id="dp-row-${i}" style="grid-template-columns:32px 1fr 80px 50px 70px 65px auto;">
               <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
                 <button onclick="moveProductRow(${i},-1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;" title="Monter">▲</button>
                 <button onclick="moveProductRow(${i},1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;" title="Descendre">▼</button>
@@ -789,6 +790,7 @@ function showDepForm(depId) {
               <input type="number" placeholder="Prix €" value="${p.prix}" id="dp-prix-${i}" min="0" step="0.01"/>
               <div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-print-${i}" ${p.isPrint?'checked':''} style="width:18px;height:18px;cursor:pointer;"/></div>
               <div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-caisse-${i}" ${p.isCaisse?'checked':''} style="width:18px;height:18px;cursor:pointer;" title="Mode caisse globale : saisie en montant €"/></div>
+              <div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-visible-${i}" ${p.isVisible!==false?'checked':''} style="width:18px;height:18px;cursor:pointer;" title="Afficher dans la saisie"/></div>
               <button class="btn-rm" onclick="removeProductRow(${i})">×</button>
             </div>`).join('')}
         </div>
@@ -808,8 +810,8 @@ function addProductRow() {
   const row = document.createElement('div');
   row.className = 'dep-product-row';
   row.id = `dp-row-${i}`;
-  row.style.gridTemplateColumns = '32px 1fr 80px 50px 70px auto';
-  row.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;"><button onclick="moveProductRow(${i},-1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;">▲</button><button onclick="moveProductRow(${i},1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;">▼</button></div><input placeholder="Nom du produit" id="dp-name-${i}"/><input type="number" placeholder="Prix €" id="dp-prix-${i}" min="0" step="0.01"/><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-print-${i}" style="width:18px;height:18px;cursor:pointer;"/></div><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-caisse-${i}" style="width:18px;height:18px;cursor:pointer;" title="Mode caisse globale"/></div><button class="btn-rm" onclick="removeProductRow(${i})">×</button>`;
+  row.style.gridTemplateColumns = '32px 1fr 80px 50px 70px 65px auto';
+  row.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;"><button onclick="moveProductRow(${i},-1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;">▲</button><button onclick="moveProductRow(${i},1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;">▼</button></div><input placeholder="Nom du produit" id="dp-name-${i}"/><input type="number" placeholder="Prix €" id="dp-prix-${i}" min="0" step="0.01"/><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-print-${i}" style="width:18px;height:18px;cursor:pointer;"/></div><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-caisse-${i}" style="width:18px;height:18px;cursor:pointer;" title="Mode caisse globale"/></div><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-visible-${i}" checked style="width:18px;height:18px;cursor:pointer;" title="Afficher dans la saisie"/></div><button class="btn-rm" onclick="removeProductRow(${i})">×</button>`;
   container.appendChild(row);
 }
 function removeProductRow(i) {
@@ -831,6 +833,7 @@ function moveProductRow(i, dir) {
       prix: document.getElementById(`dp-prix-${id}`)?.value || '',
       isPrint: document.getElementById(`dp-print-${id}`)?.checked || false,
       isCaisse: document.getElementById(`dp-caisse-${id}`)?.checked || false,
+      isVisible: document.getElementById(`dp-visible-${id}`)?.checked !== false,
     };
   }
   const dataA = getRowData(rows[idx]);
@@ -842,6 +845,7 @@ function moveProductRow(i, dir) {
     const p = document.getElementById(`dp-prix-${id}`); if(p) p.value = data.prix;
     const pr = document.getElementById(`dp-print-${id}`); if(pr) pr.checked = data.isPrint;
     const ca = document.getElementById(`dp-caisse-${id}`); if(ca) ca.checked = data.isCaisse;
+    const vi = document.getElementById(`dp-visible-${id}`); if(vi) vi.checked = data.isVisible !== false;
   }
   setRowData(rows[idx], dataB);
   setRowData(rows[targetIdx], dataA);
@@ -861,11 +865,13 @@ function saveDep() {
     const prixEl = document.getElementById(`dp-prix-${idx}`);
     const printEl = document.getElementById(`dp-print-${idx}`);
     const caisseEl = document.getElementById(`dp-caisse-${idx}`);
+    const visibleEl = document.getElementById(`dp-visible-${idx}`);
     if (el.value.trim()) products.push({
       name: el.value.trim(),
       prix: parseFloat(prixEl?.value)||0,
       isPrint: printEl ? printEl.checked : false,
-      isCaisse: caisseEl ? caisseEl.checked : false
+      isCaisse: caisseEl ? caisseEl.checked : false,
+      isVisible: visibleEl ? visibleEl.checked : true
     });
   });
   if (!products.length) return;
@@ -966,6 +972,7 @@ function selectDep(id) {
 function renderProducts(dep) {
   const grid = document.getElementById('products-grid');
   grid.innerHTML = dep.products.map((p,i) => {
+    if(p.isVisible === false) return ''; // Produit masqué dans la saisie
     if(p.isCaisse) {
       // Mode caisse globale : saisie directe en montant €
       return `<div class="product-card" style="border-left:3px solid #f59e0b;">

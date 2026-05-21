@@ -530,6 +530,7 @@ function selectDepM(id){
 function renderProductsM(dep){
   const el=document.getElementById('m-products');
   el.innerHTML=dep.products.map((p,i)=>{
+    if(p.isVisible===false) return ''; // Produit masqué
     if(p.isCaisse){
       return `<div class="product-block" style="border-left:3px solid #f59e0b;">
         <div class="product-block-name">
