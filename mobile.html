@@ -249,7 +249,7 @@
 
   <div class="totaux-grid">
     <div class="total-bloc"><div class="total-bloc-label">Total encaissé</div><div class="total-bloc-value" id="m-total">0,00 €</div></div>
-    <div class="total-bloc"><div class="total-bloc-label" id="m-rev-label">À reverser</div><div class="total-bloc-value green" id="m-reverser">0,00 €</div></div>
+    <div class="total-bloc"><div class="total-bloc-label" id="m-rev-label">Total dépositaire</div><div class="total-bloc-value green" id="m-reverser">0,00 €</div></div>
   </div>
 
   <div class="dispatch-block">
@@ -496,9 +496,9 @@ function renderDepList(){
   const el=document.getElementById('dep-list-mobile');
   if(!deps.length){ el.innerHTML='<div class="empty-msg">Aucun dépositaire. Créez-en un depuis la version desktop.</div>'; return; }
   el.innerHTML=deps.map(d=>`
-    <button class="dep-btn ${d.id===currentDepId?'selected':''}" onclick="selectDepM('${d.id}')">
+    <button class="dep-btn ${d.id===currentDepId?'selected':''}" onclick="selectDepM('${d.id}')" style="${d.actif===false?'opacity:0.45;':''}">
       <div>
-        <div class="dep-btn-name">${d.name}</div>
+        <div class="dep-btn-name">${d.name} ${d.actif===false?'<span style=\'font-size:10px;background:#fee2e2;color:#dc2626;border-radius:3px;padding:1px 5px;font-weight:700;\'>INACTIF</span>':''}</div>
         <div class="dep-btn-lieu">${d.lieu||''}</div>
       </div>
       <span class="dep-btn-pct">${d.pct}%</span>
@@ -510,7 +510,7 @@ function selectDepM(id){
   const dep=getDep(id);
   if(!dep) return;
   document.getElementById('top-dep').textContent=dep.name+(dep.lieu?' — '+dep.lieu:'');
-  document.getElementById('m-rev-label').textContent=`À reverser (${dep.pct}%)`;
+  document.getElementById('m-rev-label').textContent=`Total dépositaire (${dep.pct}%)`;
   renderDepList();
   buildSel('m-dd1','m-mm1','m-yyyy1');
   buildSel('m-dd2','m-mm2','m-yyyy2');

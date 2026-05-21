@@ -478,7 +478,7 @@
         <div class="cumul-card"><div class="cumul-label">Espèces</div><div class="cumul-value" id="c-esp">0,00 €</div></div>
         <div class="cumul-card"><div class="cumul-label">Jetons</div><div class="cumul-value" style="color:#b45309;" id="c-jetons">0,00 €</div></div>
         <div class="cumul-card"><div class="cumul-label">Tips</div><div class="cumul-value" style="color:#dc2626;" id="c-tips">0,00 €</div></div>
-        <div class="cumul-card"><div class="cumul-label">Total à reverser</div><div class="cumul-value green" id="c-rev">0,00 €</div></div>
+        <div class="cumul-card"><div class="cumul-label">Total dépositaire</div><div class="cumul-value green" id="c-rev">0,00 €</div></div>
       </div>
     </div>
 
@@ -761,9 +761,17 @@ function showDepForm(depId) {
         <div class="dep-form-label" style="margin-bottom:3px;">🔑 Code PIN dépositaire <span style="font-size:10px;color:#9b9b97;">(accès depuis depositaire.html — laisser vide pour désactiver)</span></div>
         <input id="df-pin" value="${dep?dep.pin||'':''}" placeholder="Ex: capfun2025" style="height:36px;border:1px solid #d4d3cb;border-radius:8px;background:#fff;color:#1a1a18;font-size:13px;padding:0 10px;width:100%;max-width:260px;"/>
       </div>
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+        <div class="dep-form-label" style="margin-bottom:0;">✅ Dépositaire actif</div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="df-actif" ${dep?(dep.actif!==false?'checked':''):'checked'} style="width:18px;height:18px;cursor:pointer;"/>
+          <span style="font-size:13px;color:#1a1a18;">Oui (décocher = inactif)</span>
+        </label>
+      </div>
       <div class="dep-products">
-        <div class="dep-products-title">Produits</div>
-        <div style="display:grid;grid-template-columns:1fr 80px 50px 70px auto;gap:5px;margin-bottom:4px;">
+        <div class="dep-products-title">Produits <span style="font-size:10px;color:#9b9b97;font-weight:400;">(▲▼ pour réordonner)</span></div>
+        <div style="display:grid;grid-template-columns:32px 1fr 80px 50px 70px auto;gap:5px;margin-bottom:4px;">
+          <span></span>
           <span style="font-size:10px;color:#6b6b67;font-weight:600;">Nom</span>
           <span style="font-size:10px;color:#6b6b67;font-weight:600;">Prix €</span>
           <span style="font-size:10px;color:#6b6b67;font-weight:600;text-align:center;">Print ?</span>
@@ -772,7 +780,11 @@ function showDepForm(depId) {
         </div>
         <div id="df-products">
           ${products.map((p,i)=>`
-            <div class="dep-product-row" id="dp-row-${i}" style="grid-template-columns:1fr 80px 50px 70px auto;">
+            <div class="dep-product-row" id="dp-row-${i}" style="grid-template-columns:32px 1fr 80px 50px 70px auto;">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:1px;">
+                <button onclick="moveProductRow(${i},-1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;" title="Monter">▲</button>
+                <button onclick="moveProductRow(${i},1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;" title="Descendre">▼</button>
+              </div>
               <input placeholder="Nom du produit" value="${p.name}" id="dp-name-${i}"/>
               <input type="number" placeholder="Prix €" value="${p.prix}" id="dp-prix-${i}" min="0" step="0.01"/>
               <div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-print-${i}" ${p.isPrint?'checked':''} style="width:18px;height:18px;cursor:pointer;"/></div>
@@ -796,14 +808,43 @@ function addProductRow() {
   const row = document.createElement('div');
   row.className = 'dep-product-row';
   row.id = `dp-row-${i}`;
-  row.style.gridTemplateColumns = '1fr 80px 60px auto';
-  row.style.gridTemplateColumns = '1fr 80px 50px 70px auto';
-  row.innerHTML = `<input placeholder="Nom du produit" id="dp-name-${i}"/><input type="number" placeholder="Prix €" id="dp-prix-${i}" min="0" step="0.01"/><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-print-${i}" style="width:18px;height:18px;cursor:pointer;"/></div><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-caisse-${i}" style="width:18px;height:18px;cursor:pointer;" title="Mode caisse globale"/></div><button class="btn-rm" onclick="removeProductRow(${i})">×</button>`;
+  row.style.gridTemplateColumns = '32px 1fr 80px 50px 70px auto';
+  row.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;"><button onclick="moveProductRow(${i},-1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;">▲</button><button onclick="moveProductRow(${i},1)" style="border:none;background:none;cursor:pointer;font-size:12px;padding:0;line-height:1;color:#6b6b67;">▼</button></div><input placeholder="Nom du produit" id="dp-name-${i}"/><input type="number" placeholder="Prix €" id="dp-prix-${i}" min="0" step="0.01"/><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-print-${i}" style="width:18px;height:18px;cursor:pointer;"/></div><div style="display:flex;align-items:center;justify-content:center;"><input type="checkbox" id="dp-caisse-${i}" style="width:18px;height:18px;cursor:pointer;" title="Mode caisse globale"/></div><button class="btn-rm" onclick="removeProductRow(${i})">×</button>`;
   container.appendChild(row);
 }
 function removeProductRow(i) {
   const row = document.getElementById(`dp-row-${i}`);
   if (row) row.remove();
+}
+
+function moveProductRow(i, dir) {
+  // Lire toutes les valeurs actuelles
+  const rows = [...document.querySelectorAll('[id^="dp-row-"]')];
+  const idx = rows.findIndex(r => r.id === `dp-row-${i}`);
+  const targetIdx = idx + dir;
+  if (targetIdx < 0 || targetIdx >= rows.length) return;
+  // Récupérer les données de chaque ligne
+  function getRowData(row) {
+    const id = row.id.split('-').pop();
+    return {
+      name: document.getElementById(`dp-name-${id}`)?.value || '',
+      prix: document.getElementById(`dp-prix-${id}`)?.value || '',
+      isPrint: document.getElementById(`dp-print-${id}`)?.checked || false,
+      isCaisse: document.getElementById(`dp-caisse-${id}`)?.checked || false,
+    };
+  }
+  const dataA = getRowData(rows[idx]);
+  const dataB = getRowData(rows[targetIdx]);
+  // Échanger les valeurs
+  function setRowData(row, data) {
+    const id = row.id.split('-').pop();
+    const n = document.getElementById(`dp-name-${id}`); if(n) n.value = data.name;
+    const p = document.getElementById(`dp-prix-${id}`); if(p) p.value = data.prix;
+    const pr = document.getElementById(`dp-print-${id}`); if(pr) pr.checked = data.isPrint;
+    const ca = document.getElementById(`dp-caisse-${id}`); if(ca) ca.checked = data.isCaisse;
+  }
+  setRowData(rows[idx], dataB);
+  setRowData(rows[targetIdx], dataA);
 }
 
 function saveDep() {
@@ -812,6 +853,7 @@ function saveDep() {
   const pct = parseFloat(document.getElementById('df-pct').value) || 0;
   const fraisCB = parseFloat(document.getElementById('df-frais-cb').value) || 0;
   const pin = document.getElementById('df-pin')?.value.trim() || '';
+  const actif = document.getElementById('df-actif')?.checked !== false;
   if (!name) return;
   const products = [];
   document.querySelectorAll('[id^="dp-name-"]').forEach(el => {
@@ -829,10 +871,10 @@ function saveDep() {
   if (!products.length) return;
   if (editingDepId) {
     const dep = getDep(editingDepId);
-    dep.name = name; dep.lieu = lieu; dep.pct = pct; dep.fraisCB = fraisCB; dep.pin = pin; dep.products = products;
+    dep.name = name; dep.lieu = lieu; dep.pct = pct; dep.fraisCB = fraisCB; dep.pin = pin; dep.actif = actif; dep.products = products;
     saveDeps(dep);
   } else {
-    const newDep = {id: uid(), name, lieu, pct, fraisCB, pin, products};
+    const newDep = {id: uid(), name, lieu, pct, fraisCB, pin, actif, products};
     deps.push(newDep);
     saveDeps(newDep);
   }
@@ -870,7 +912,10 @@ function renderDepList() {
     <div class="dep-item ${d.id===currentDepId?'active':''}">
       <div class="dep-info">
         <div class="dep-name">${d.name}${d.lieu?' — '+d.lieu:''}</div>
-        <div class="dep-meta">${d.pct}% de reversement · ${d.products.length} produit${d.products.length>1?'s':''} : ${d.products.map(p=>p.name+' ('+fmt(p.prix)+')').join(', ')}</div>
+        <div class="dep-meta">
+          ${d.actif===false ? '<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:6px;">⛔ INACTIF</span>' : '<span style="background:#dcfce7;color:#065f46;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:6px;">✅ ACTIF</span>'}
+          ${d.pct}% de reversement · ${d.products.length} produit${d.products.length>1?'s':''} : ${d.products.map(p=>p.name+' ('+fmt(p.prix)+')').join(', ')}
+        </div>
         <div style="margin-top:4px;font-size:11px;">${d.pin ? '🔑 PIN : <strong>'+d.pin+'</strong> — <a href="depositaire.html" target="_blank" style="color:#1e40af;">Lien dépositaire ↗</a>' : '<span style="color:#9b9b97;">Pas de PIN — accès dépositaire désactivé</span>'}</div>
       </div>
       <div class="dep-actions">
@@ -884,12 +929,12 @@ function renderDepSelect() {
   const sel = document.getElementById('dep-select');
   const prev = sel.value;
   sel.innerHTML = '<option value="">— Choisir un dépositaire —</option>';
-  deps.forEach(d => {
+  deps.filter(d => d.actif !== false).forEach(d => {
     const o = document.createElement('option');
     o.value = d.id; o.textContent = `${d.name}${d.lieu?' — '+d.lieu:''}`;
     sel.appendChild(o);
   });
-  if (prev && deps.find(d=>d.id===prev)) sel.value = prev;
+  if (prev && deps.find(d=>d.id===prev && d.actif!==false)) sel.value = prev;
 }
 
 // ── Select active dep ─────────────────────────────────────────────
@@ -1632,7 +1677,7 @@ function printRecap(allData) {
     <div class="print-stat"><div class="print-stat-label">Total encaissé</div><div class="print-stat-value">${fmt(totalEnc)}</div></div>
     <div class="print-stat"><div class="print-stat-label">Dont CB</div><div class="print-stat-value">${fmt(totalCB)}</div></div>
     <div class="print-stat"><div class="print-stat-label">Dont espèces</div><div class="print-stat-value">${fmt(totalEsp)}</div></div>
-    <div class="print-stat"><div class="print-stat-label">Total à reverser (${dep.pct}%)</div><div class="print-stat-value green">${fmt(totalRev)}</div></div>
+    <div class="print-stat"><div class="print-stat-label">Total dépositaire (${dep.pct}%)</div><div class="print-stat-value green">${fmt(totalRev)}</div></div>
   </div>
 </div>
 
