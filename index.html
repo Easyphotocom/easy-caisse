@@ -1157,9 +1157,15 @@ function saveEntry() {
   const reverserCBttc = Math.max(0, totalCB * (dep.pct/100) - fraisCB);
   const reverserCBht = Math.round((reverserCBttc / 1.20) * 100) / 100;
   const reverser = reverserEsp + reverserCBht;
+  // Clean qtys - replace null/undefined with 0 for Firebase
+  const cleanQtys = qtys.map(q => ({
+    qty: q.qty === null || q.qty === undefined ? 0 : q.qty,
+    ca: q.ca === null || q.ca === undefined ? 0 : q.ca,
+    modeCA: q.modeCA === true
+  }));
   const newEntry = {
     id:uid(), depId:currentDepId, date:dateHeure, periode:periode||'',
-    qtys, totalCB:totalCB||0, totalEsp:totalEsp||0, total:total||0,
+    qtys:cleanQtys, totalCB:totalCB||0, totalEsp:totalEsp||0, total:total||0,
     nbJetons:nbJetons||0, jetonVal:jetonVal||0, tropVerse:tropVerse||0,
     fraisCB:fraisCB||0, reverserEsp:reverserEsp||0, reverserCBht:reverserCBht||0,
     reverser:reverser||0, ts:Date.now()
