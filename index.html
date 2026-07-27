@@ -687,15 +687,29 @@ function getDate(d,m,y){
 // ── Helpers ───────────────────────────────────────────────────────
 function fmt(v){return Number(v).toFixed(2).replace('.',',')+' €';}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+// Nettoie les undefined/null pour Firebase
+function cleanForFirebase(obj) {
+  if(Array.isArray(obj)) return obj.map(cleanForFirebase);
+  if(obj !== null && typeof obj === 'object') {
+    const clean = {};
+    for(const [k,v] of Object.entries(obj)) {
+      if(v === undefined) clean[k] = null;
+      else if(v !== null && typeof v === 'object') clean[k] = cleanForFirebase(v);
+      else clean[k] = v;
+    }
+    return clean;
+  }
+  return obj;
+}
+
 function saveDeps(dep) {
-  if(window.fbSave) window.fbSave('deps', dep.id, dep);
+  if(window.fbSave) window.fbSave('deps', dep.id, cleanForFirebase(dep));
 }
 function saveEntries(entry) {
-  const data = {...entry, ts: entry.ts||Date.now()};
+  const data = cleanForFirebase({...entry, ts: entry.ts||Date.now()});
   if(window.fbSave) {
     window.fbSave('entries', entry.id, data);
   } else {
-    // Retry until Firebase is ready
     let attempts = 0;
     const retry = setInterval(() => {
       attempts++;
@@ -710,7 +724,7 @@ function saveEntries(entry) {
   }
 }
 function saveRevs(rev) {
-  if(window.fbSave) window.fbSave('revs', rev.id, {...rev, ts: rev.ts||Date.now()});
+  if(window.fbSave) window.fbSave('revs', rev.id, cleanForFirebase({...rev, ts: rev.ts||Date.now()}));
 }
 function deleteFbEntry(id) {
   if(window.fbDelete) window.fbDelete('entries', id);
@@ -1402,7 +1416,7 @@ function saveAppro(depId) {
   // qty = nb feuilles, store nbFeuilles and prixAchat (rouleau)
   const stock = {id:uid(), depId, prodName:'_shared_', qty:nbFeuilles, nbFeuilles, prixAchat, tva, date, ts:Date.now()};
   allStocks.push(stock);
-  if(window.fbSave) window.fbSave('stocks', stock.id, stock);
+  if(window.fbSave) window.fbSave('stocks', stock.id, cleanForFirebase(stock));
   renderStock(getDep(depId));
   renderDashboard(getDep(depId));
 }
@@ -1419,7 +1433,7 @@ function saveApproInd(btn) {
   const date = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
   const stock = {id:uid(), depId, prodName, qty, prixAchat, tva, date, ts:Date.now()};
   allStocks.push(stock);
-  if(window.fbSave) window.fbSave('stocks', stock.id, stock);
+  if(window.fbSave) window.fbSave('stocks', stock.id, cleanForFirebase(stock));
   renderStock(getDep(depId));
   renderDashboard(getDep(depId));
 }
