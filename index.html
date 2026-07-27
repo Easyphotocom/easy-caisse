@@ -1173,9 +1173,10 @@ function saveEntry() {
   const reverser = reverserEsp + reverserCBht;
   // Clean qtys - preserve mode and only set default for active field
   const cleanQtys = qtys.map(q => ({
-    qty: q.modeCA ? 0 : (q.qty||0),
-    ca: q.modeCA ? (q.ca||0) : 0,
-    modeCA: q.modeCA === true
+    qty: (q.modeCA || q.isCaisse) ? 0 : (q.qty||0),
+    ca: (q.modeCA || q.isCaisse) ? (q.ca||0) : 0,
+    modeCA: q.modeCA === true,
+    isCaisse: q.isCaisse === true
   }));
   const newEntry = {
     id:uid(), depId:currentDepId, date:dateHeure, periode:periode||'',
