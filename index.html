@@ -1171,10 +1171,10 @@ function saveEntry() {
   const reverserCBttc = Math.max(0, totalCB * (dep.pct/100) - fraisCB);
   const reverserCBht = Math.round((reverserCBttc / 1.20) * 100) / 100;
   const reverser = reverserEsp + reverserCBht;
-  // Clean qtys - replace null/undefined with 0 for Firebase
+  // Clean qtys - preserve mode and only set default for active field
   const cleanQtys = qtys.map(q => ({
-    qty: q.qty === null || q.qty === undefined ? 0 : q.qty,
-    ca: q.ca === null || q.ca === undefined ? 0 : q.ca,
+    qty: q.modeCA ? 0 : (q.qty||0),
+    ca: q.modeCA ? (q.ca||0) : 0,
     modeCA: q.modeCA === true
   }));
   const newEntry = {
